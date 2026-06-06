@@ -1,16 +1,14 @@
-// lib/deps.ts — inyección de dependencias para las funciones de ML.
+// lib/deps.ts — Inyección de dependencias para las funciones de ML / orquestación.
 //
-// PUNTO ÚNICO DE INTEGRACIÓN: hoy `db` y `send` salen de lib/mocks.ts.
-// Al integrar, cambiá SOLO estos imports:
-//   import { db } from "./db.js";              // Data  (reemplaza el mock)
-//   import { sendText, ... } from "./kapso.js" // Backend (reemplaza el mock)
-// Nada más cambia: runAgent/proposeAssignment/etc. ya programan contra Deps.
+// INTEGRACIÓN AUTOMÁTICA por entorno (SPEC-00 §9, "integración trivial"):
+//   - db    → Supabase real (lib/db.ts) si hay SUPABASE_URL; si no, mock en memoria (demo).
+//   - send  → Kapso real (lib/kapso.ts) si hay KAPSO_API_KEY+PHONE_ID; si no, mock que loguea.
+//   - model → proveedor del AI SDK (lib/model.ts).
+// Así el harness/demo corre sin credenciales y el webhook usa la infra real cuando está set.
 
 import type { LanguageModel } from "ai";
 import type { Db, Send } from "./contracts.js";
 import { createModel } from "./model.js";
-// ⬇️ SWAP AQUÍ al integrar (mocks → reales)
-import { db, sendButtons, sendList, sendText } from "./mocks.js";
 
 export interface Deps {
 	db: Db;
@@ -20,12 +18,28 @@ export interface Deps {
 	now: () => string;
 }
 
+// HORNERO_FORCE_MOCK=1 fuerza mocks aunque haya credenciales (lo usan el harness y la demo
+// para NO mandar WhatsApp reales mientras probás local).
+const forceMock = process.env.HORNERO_FORCE_MOCK === "1";
+const useSupabase = !forceMock && !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+const useKapso = !forceMock && !!process.env.KAPSO_API_KEY && !!process.env.KAPSO_PHONE_NUMBER_ID;
+
+// Import dinámico: lib/db.ts crea el cliente Supabase al importarse, así que solo lo
+// cargamos cuando está configurado (evita romper el modo mock sin credenciales).
+const db: Db = useSupabase ? (await import("./db.js")).db : (await import("./mocks.js")).db;
+const sendMod = useKapso ? await import("./kapso.js") : await import("./mocks.js");
+const send: Send = { sendText: sendMod.sendText, sendButtons: sendMod.sendButtons, sendList: sendMod.sendList };
+
+if (!process.env.VITEST) {
+	console.error(`[deps] db=${useSupabase ? "supabase" : "mock"} · send=${useKapso ? "kapso" : "mock"}`);
+}
+
 let _model: LanguageModel | null = null;
 
-/** Dependencias reales del runtime (db+send reales al integrar, modelo del AI SDK). */
+/** Dependencias reales del runtime (db/send según entorno, modelo del AI SDK). */
 export const defaultDeps: Deps = {
 	db,
-	send: { sendText, sendButtons, sendList },
+	send,
 	get model() {
 		if (!_model) _model = createModel();
 		return _model;
