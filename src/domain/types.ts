@@ -87,3 +87,20 @@ export type Reminder = {
 	status: "pending" | "sent" | "blocked_template_required";
 	createdAt: string;
 };
+
+// --- SPEC-00 Types ---
+export type Capacity = "baja" | "media" | "alta";
+
+export interface Person {
+	id: string;
+	wa_phone: string;
+	name: string;
+	role?: string;
+	skills: string[];
+	capacity: Capacity;
+	is_coordinator: boolean;
+	timezone: string;
+	active: boolean;
+	created_at: string;
+}
+

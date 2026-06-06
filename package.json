@@ -16,6 +16,7 @@
     "@ai-sdk/openai-compatible": "^2.0.48",
     "@hono/node-server": "latest",
     "@kapso/whatsapp-cloud-api": "latest",
+    "@supabase/supabase-js": "^2.107.0",
     "ai": "latest",
     "dotenv": "^17.4.2",
     "hono": "latest",
