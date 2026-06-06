@@ -1,2 +1,18 @@
 # Local Pi runtime state
 .atl/
+.pi-lens/
+tmp/
+
+# Dependencies/build
+node_modules/
+dist/
+coverage/
+
+# Env/secrets
+.env
+.env.*
+!.env.example
+
+# Runtime demo data
+/data/**
+!/data/.gitkeep

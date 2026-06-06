@@ -1,0 +1,14 @@
+project: hackelthon
+product: WhatsApp task-management agent for NGOs
+language: en
+artifact_store: both
+sdd:
+  execution_mode: auto
+  source_spec: docs/spec-kapso-ong-task-agent.md
+  chained_pr_strategy: single-pr-default
+  review_budget_lines: null
+constraints:
+  - Resolve tenant on every inbound message from sender phone; never use global tenant state.
+  - Use Kapso webhooks for inbound events and Kapso API/SDK for outbound messages.
+  - Use Vercel AI SDK tools for data-changing conversational actions.
+  - Use Markdown/file storage for the hackathon version; do not add Postgres.
