@@ -1,0 +1,145 @@
+openspec/changes/backend-deploy-sandbox-smoke/apply-progress.md
+  s_867f87b4b3e5fc::t_2f8946b62d45a1 1-56
+src/domain/buttonRouter.ts
+  s_a2ae48550254d9::t_95591ea3f2ca11 1-4,6-15
+  s_56f82a70989db0::t_43555da7461052 5,16-19
+openspec/changes/backend-assignment-approval-contract-decision/proposal.md
+  s_7bc0200b6a99f6::t_e594d0bdab2abf 1-42
+openspec/changes/backend-deploy-sandbox-smoke/proposal.md
+  s_7bc0200b6a99f6::t_5e02a02bf8a988 1-39
+src/domain/onboarding.test.ts
+  s_88d35d8593fc02::t_003a87e0c9c360 18-20
+openspec/changes/backend-webhook-dispatch-and-api-alias/tasks.md
+  s_7bc0200b6a99f6::t_be4b0478a562db 1-12,22-24,29-32
+  s_56f82a70989db0::t_b5c13ac0a4ea79 13-21,25-28
+openspec/changes/backend-deterministic-import-buttons/specs/whatsapp-task-agent/spec.md
+  s_7bc0200b6a99f6::t_065f25c50c228e 1-60
+src/kapso/client.test.ts
+  s_88d35d8593fc02::t_580afdc6638be1 1-92
+openspec/changes/backend-idempotency-fast-response-hardening/proposal.md
+  s_7bc0200b6a99f6::t_901180a7a309c4 1-37
+openspec/changes/backend-idempotency-fast-response-hardening/apply-progress.md
+  s_5bedece05d4bed::t_ad2677cb3c0096 1-13,16-27,32-34,37-41,43-51
+docs/deploy-kapso-sandbox.md
+  s_867f87b4b3e5fc::t_7e857031003eb1 1-93,95-102
+  s_867f87b4b3e5fc::t_1f770ce9cf075e 94
+openspec/changes/backend-assignment-approval-contract-decision/tasks.md
+  s_7bc0200b6a99f6::t_e594d0bdab2abf 1-38
+openspec/changes/backend-deploy-sandbox-smoke/tasks.md
+  s_867f87b4b3e5fc::t_beffd0d81ba4ec 13-20,24-27
+  s_7bc0200b6a99f6::t_5e02a02bf8a988 1-12,21-23,28-33
+src/domain/processInboundMessage.ts
+  s_a2ae48550254d9::t_19a712559dccaa 7-14,25,41-45,58-62
+  s_56f82a70989db0::t_3020bbcea451d5 17,23-24,40,46-48,67-70
+openspec/changes/backend-kapso-outbound-list-limits/specs/whatsapp-task-agent/spec.md
+  s_7bc0200b6a99f6::t_5f2bbd5bf04da2 1-43
+src/domain/importMode.test.ts
+  s_a2ae48550254d9::t_5d172029c8e619 1-227
+openspec/changes/backend-deterministic-import-buttons/tasks.md
+  s_a2ae48550254d9::t_62dd8919aef66a 13-24,28-32
+  s_7bc0200b6a99f6::t_065f25c50c228e 1-12,25-27,33-37
+src/kapso/consoleClient.ts
+  s_88d35d8593fc02::t_65698e6b9ebd76 1,16-21
+openspec/changes/backend-deterministic-import-buttons/apply-progress.md
+  s_a2ae48550254d9::t_00b12e489de048 1-54
+openspec/changes/backend-kapso-outbound-list-limits/tasks.md
+  s_7bc0200b6a99f6::t_5f2bbd5bf04da2 1-12,20-22,26-29
+  s_88d35d8593fc02::t_df8b0fa17c6fde 13-19,23-25
+src/app.ts
+  s_56f82a70989db0::t_a1b9e1335e85b7 1,3,5-6,13-23,25-27,31,59-68,77-78,84-87
+openspec/changes/backend-kapso-outbound-list-limits/apply-progress.md
+  s_88d35d8593fc02::t_c221d65ce5b725 1-54
+openspec/changes/backend-idempotency-fast-response-hardening/tasks.md
+  s_5bedece05d4bed::t_9c3c68d1848f76 13-19,23-27
+  s_7bc0200b6a99f6::t_901180a7a309c4 1-12,20-22,28-31
+openspec/changes/backend-webhook-dispatch-and-api-alias/proposal.md
+  s_7bc0200b6a99f6::t_be4b0478a562db 1-38
+artifacts/backend-deploy-sandbox-smoke-evidence.md
+  s_867f87b4b3e5fc::t_ae650c1d4fb558 1-12,16-27,29-32
+  s_867f87b4b3e5fc::t_d53272f51b37c4 13-15
+  s_867f87b4b3e5fc::t_ca666b28edae27 28
+openspec/changes/backend-deploy-sandbox-smoke/specs/whatsapp-task-agent/spec.md
+  s_7bc0200b6a99f6::t_5e02a02bf8a988 1-62
+src/kapso/client.ts
+  s_88d35d8593fc02::t_c3b050dad9e48f 3-6,12-24,32,34-43,47,59-72,76-77,86,99
+openspec/changes/backend-kapso-outbound-list-limits/proposal.md
+  s_7bc0200b6a99f6::t_5f2bbd5bf04da2 1-37
+openspec/changes/backend-assignment-approval-contract-decision/specs/whatsapp-task-agent/spec.md
+  s_7bc0200b6a99f6::t_e594d0bdab2abf 1-69
+src/domain/textHandler.ts
+  s_56f82a70989db0::t_66d69344c5006d 1-9
+openspec/changes/backend-webhook-dispatch-and-api-alias/apply-progress.md
+  s_56f82a70989db0::t_795509b55840c4 1-58
+openspec/changes/backend-deterministic-import-buttons/proposal.md
+  s_7bc0200b6a99f6::t_065f25c50c228e 1-39
+src/domain/importMode.ts
+  s_a2ae48550254d9::t_c55c838119da48 1-200
+src/app.test.ts
+  s_5bedece05d4bed::t_b87f4b93d12c9f 43-48,81-240
+  s_56f82a70989db0::t_172ee1730f2be5 242-297
+  s_5bedece05d4bed::t_6800030bafd948 301-308
+openspec/changes/backend-webhook-dispatch-and-api-alias/specs/whatsapp-task-agent/spec.md
+  s_7bc0200b6a99f6::t_be4b0478a562db 1-49
+openspec/changes/backend-idempotency-fast-response-hardening/specs/whatsapp-task-agent/spec.md
+  s_7bc0200b6a99f6::t_901180a7a309c4 1-45
+README.md
+  s_867f87b4b3e5fc::t_1bcb2c5a18a2a7 1-53
+src/domain/processInboundMessage.test.ts
+  s_56f82a70989db0::t_f7f1a0390b9a2e 1-99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3c46919e0da1219cc3d6497cd8398112badf7e3b",
+  "prompts": {},
+  "sessions": {
+    "s_56f82a70989db0": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9e44-23ce-7344-afca-a206ad2a0b95",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_5bedece05d4bed": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9e50-4f87-743f-98eb-42324a40fe01",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_7bc0200b6a99f6": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9e2e-63f3-7c9e-95f8-3140f43274d0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_867f87b4b3e5fc": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9e72-3d90-7d9d-9533-e889029ec296",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_88d35d8593fc02": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9e3e-289d-7a8f-b162-a80b6fd1722a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    },
+    "s_a2ae48550254d9": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9e5c-dc23-7975-a4b7-15455056b8ae",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
