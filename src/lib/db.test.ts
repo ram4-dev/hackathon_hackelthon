@@ -120,6 +120,21 @@ describe('db people functions (SPEC-D.3)', () => {
 		const res = await db.listCoordinators();
 		expect(res).toEqual([{ id: '1' }]);
 	});
+
+	it('listPeople optionally filters by active and preserves skills', async () => {
+		const activePeople = [
+			{ id: '1', active: true, skills: ['datos'] },
+		];
+		const eq = vi.fn().mockReturnValue({
+			then: (resolve: any) => resolve({ data: activePeople, error: null }),
+		});
+		mockSelect.mockReturnValue({ eq });
+
+		const res = await db.listPeople({ active: true });
+
+		expect(eq).toHaveBeenCalledWith('active', true);
+		expect(res).toEqual(activePeople);
+	});
 });
 
 describe('db task functions (SPEC-D.4)', () => {

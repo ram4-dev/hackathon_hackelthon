@@ -14,7 +14,7 @@ import {
 } from "./importMode.js";
 import { handleOnboarding } from "./onboarding.js";
 import { routeInboundMessage } from "./stateMachine.js";
-import { createEchoTextHandler, type TextHandler } from "./textHandler.js";
+import { createAgentTextHandler, type TextHandler } from "./textHandler.js";
 
 export type ProcessInboundDeps = {
 	store: MarkdownStore;
@@ -64,7 +64,7 @@ export async function processInboundMessage(
 		return;
 	}
 
-	await (deps.textHandler ?? createEchoTextHandler(deps.outbound))(
+	await (deps.textHandler ?? createAgentTextHandler(deps.outbound))(
 		normalized.from,
 		normalized.text,
 	);

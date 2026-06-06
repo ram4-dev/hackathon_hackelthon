@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createRequire } from "node:module";
 import type {
 	Person,
 	Capacity,
@@ -50,8 +50,29 @@ const TASK_TYPES: TaskType[] = [
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const require = createRequire(import.meta.url);
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+type SupabaseLike = {
+	from(table: string): any;
+};
+
+let runtimeSupabase: SupabaseLike | null = null;
+
+function getRuntimeSupabase(): SupabaseLike {
+	if (!runtimeSupabase) {
+		const { createClient } = require("@supabase/supabase-js") as {
+			createClient(url: string, key: string): SupabaseLike;
+		};
+		runtimeSupabase = createClient(supabaseUrl, supabaseKey);
+	}
+	return runtimeSupabase;
+}
+
+export const supabase: SupabaseLike = {
+	from(table: string) {
+		return getRuntimeSupabase().from(table);
+	},
+};
 
 export const db = {
 	async upsertPerson(input: {
@@ -138,6 +159,17 @@ export const db = {
 
 		if (error) throw error;
 		return data as Person[];
+	},
+
+	async listPeople(filter?: { active?: boolean }): Promise<Person[]> {
+		let query = supabase.from("people").select("*");
+		if (filter?.active !== undefined) {
+			query = query.eq("active", filter.active);
+		}
+
+		const { data, error } = await query;
+		if (error) throw error;
+		return (data ?? []) as Person[];
 	},
 
 	// --- SPEC-D.4 ---
