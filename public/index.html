@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hornero · La coordinación e impacto de tu ONG, en WhatsApp</title>
+  <meta name="description" content="Hornero es un agente que vive dentro de WhatsApp y ayuda a las ONGs chicas a coordinar su trabajo y medir su impacto. Sin instalar nada, sin capacitación, con costo casi cero.">
+  <meta name="theme-color" content="#F7F1E8">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Hornero · Coordinación e impacto de tu ONG, en WhatsApp">
+  <meta property="og:description" content="Un agente que vive en WhatsApp: coordina personas y tareas, asigna con doble aprobación, recuerda el conocimiento de la organización y mide el impacto.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%A6%3C/text%3E%3C/svg%3E">
+
+  <style>
+    :root {
+      --crema: #F7F1E8;
+      --crema-2: #FDFAF4;
+      --carbon: #2B2521;
+      --carbon-suave: #5a504a;
+      --terracota: #C45B3C;
+      --terracota-osc: #A8482D;
+      --ocre: #E8A33D;
+      --oliva: #5B6B4A;
+      --oliva-osc: #485539;
+      --borde: #e7dccb;
+
+      --sombra-suave: 0 2px 8px rgba(43, 37, 33, 0.05), 0 8px 24px rgba(43, 37, 33, 0.06);
+      --sombra-fuerte: 0 6px 16px rgba(43, 37, 33, 0.08), 0 18px 50px rgba(43, 37, 33, 0.12);
+
+      --r-sm: 14px;
+      --r-md: 22px;
+      --r-lg: 34px;
+      --r-pill: 999px;
+
+      --max: 1120px;
+      --serif: "Fraunces", Georgia, "Times New Roman", serif;
+      --sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+
+      --paso: clamp(2.75rem, 7vw, 6rem);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--carbon);
+      background-color: var(--crema);
+      line-height: 1.65;
+      font-size: 1.0625rem;
+      overflow-x: hidden;
+      /* Textura sutil tipo barro */
+      background-image:
+        radial-gradient(circle at 12% 8%, rgba(232, 163, 61, 0.10), transparent 42%),
+        radial-gradient(circle at 88% 18%, rgba(196, 91, 60, 0.08), transparent 40%),
+        radial-gradient(circle at 50% 100%, rgba(91, 107, 74, 0.07), transparent 55%);
+      background-attachment: fixed;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--serif);
+      font-weight: 600;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+      color: var(--carbon);
+      margin: 0 0 0.5em;
+    }
+
+    p { margin: 0 0 1rem; }
+    a { color: inherit; }
+    img, video { max-width: 100%; display: block; }
+
+    .wrap { width: 100%; max-width: var(--max); margin-inline: auto; padding-inline: clamp(1.1rem, 4vw, 2.5rem); }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--terracota-osc);
+      background: rgba(196, 91, 60, 0.10);
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--r-pill);
+    }
+
+    /* ---------- Botones ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0.95rem 1.6rem;
+      border-radius: var(--r-pill);
+      border: 2px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
+      will-change: transform;
+    }
+    .btn-primary {
+      background: var(--terracota);
+      color: var(--crema-2);
+      box-shadow: 0 6px 18px rgba(196, 91, 60, 0.32);
+    }
+    .btn-primary:hover {
+      background: var(--terracota-osc);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(196, 91, 60, 0.42);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--carbon);
+      border-color: var(--borde);
+    }
+    .btn-ghost:hover {
+      border-color: var(--terracota);
+      color: var(--terracota-osc);
+      transform: translateY(-2px);
+    }
+    .btn:focus-visible,
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--ocre);
+      outline-offset: 3px;
+    }
+
+    /* ---------- Nav ---------- */
+    header.nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(247, 241, 232, 0.82);
+      backdrop-filter: saturate(1.4) blur(12px);
+      -webkit-backdrop-filter: saturate(1.4) blur(12px);
+      border-bottom: 1px solid transparent;
+      transition: border-color .3s ease, box-shadow .3s ease;
+    }
+    header.nav.scrolled {
+      border-bottom-color: var(--borde);
+      box-shadow: 0 6px 20px rgba(43, 37, 33, 0.04);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-block: 0.85rem;
+    }
+    .logo {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: 1.4rem;
+      text-decoration: none;
+      color: var(--carbon);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      letter-spacing: -0.01em;
+    }
+    .logo .bird { font-size: 1.5rem; line-height: 1; transition: transform .3s ease; }
+    .logo:hover .bird { transform: rotate(-10deg) translateY(-1px); }
+
+    .nav-links { display: none; gap: 1.9rem; align-items: center; }
+    .nav-links a {
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.98rem;
+      color: var(--carbon-suave);
+      transition: color .2s ease;
+    }
+    .nav-links a:hover { color: var(--terracota-osc); }
+    .nav-cta { display: none; }
+
+    @media (min-width: 880px) {
+      .nav-links { display: flex; }
+      .nav-cta { display: inline-flex; }
+    }
+
+    /* ---------- Hero ---------- */
+    .hero { position: relative; padding-top: var(--paso); padding-bottom: var(--paso); }
+    .hero-grid { display: grid; gap: clamp(2rem, 5vw, 3.5rem); align-items: center; }
+    @media (min-width: 940px) {
+      .hero-grid { grid-template-columns: 1.05fr 1fr; }
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6.2vw, 4.3rem);
+      margin-top: 1.1rem;
+    }
+    .hero h1 .acento { color: var(--terracota); font-style: italic; }
+    .hero .lead {
+      font-size: clamp(1.08rem, 2.4vw, 1.3rem);
+      color: var(--carbon-suave);
+      max-width: 36ch;
+      margin-bottom: 1.8rem;
+    }
+    .hero-cta { display: flex; flex-wrap: wrap; gap: 0.85rem; }
+    .hero-note {
+      margin-top: 1.6rem;
+      font-size: 0.92rem;
+      color: var(--carbon-suave);
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .hero-note .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--oliva);
+      box-shadow: 0 0 0 4px rgba(91, 107, 74, 0.18);
+    }
+
+    /* Marco de video orgánico */
+    .video-frame {
+      position: relative;
+      border-radius: var(--r-lg);
+      background: var(--crema-2);
+      padding: 0.6rem;
+      box-shadow: var(--sombra-fuerte);
+      border: 1px solid var(--borde);
+      overflow: hidden;
+    }
+    .video-frame::before {
+      /* halo cálido decorativo */
+      content: "";
+      position: absolute;
+      inset: -30% -20% auto auto;
+      width: 60%;
+      aspect-ratio: 1;
+      background: radial-gradient(circle, rgba(232, 163, 61, 0.35), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .video-frame video {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: auto;
+      border-radius: calc(var(--r-lg) - 0.6rem);
+      background: #1a1714;
+      display: block;
+    }
+    .video-tag {
+      position: absolute;
+      z-index: 2;
+      bottom: 1.1rem;
+      left: 1.1rem;
+      background: rgba(43, 37, 33, 0.86);
+      color: var(--crema-2);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--r-pill);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      backdrop-filter: blur(4px);
+    }
+    .video-tag::before {
+      content: "";
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #5fd07a;
+      box-shadow: 0 0 0 3px rgba(95, 208, 122, 0.3);
+    }
+
+    /* ---------- Bandas / secciones ---------- */
+    section { padding-block: var(--paso); }
+    .banda-crema-2 { background: var(--crema-2); border-block: 1px solid var(--borde); }
+
+    .sect-head { max-width: 44ch; margin-bottom: 2.8rem; }
+    .sect-head.centrado { margin-inline: auto; text-align: center; max-width: 50ch; }
+    .sect-head h2 { font-size: clamp(1.9rem, 4.4vw, 3rem); }
+    .sect-head p { color: var(--carbon-suave); font-size: 1.08rem; }
+
+    /* ---------- Problema → propuesta ---------- */
+    .pp-grid { display: grid; gap: 1.4rem; }
+    @media (min-width: 820px) { .pp-grid { grid-template-columns: 1fr 1fr; align-items: stretch; } }
+    .pp-card {
+      border-radius: var(--r-md);
+      padding: 2rem;
+      border: 1px solid var(--borde);
+    }
+    .pp-card.problema { background: var(--crema); }
+    .pp-card.propuesta {
+      background: linear-gradient(165deg, #2B2521, #3a322b);
+      color: var(--crema);
+      border-color: transparent;
+      box-shadow: var(--sombra-suave);
+    }
+    .pp-card h3 { font-size: 1.45rem; margin-bottom: 0.8rem; }
+    .pp-card.propuesta h3 { color: var(--ocre); }
+    .pp-card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.85rem; }
+    .pp-card li { position: relative; padding-left: 1.85rem; }
+    .pp-card.problema li::before {
+      content: "✕";
+      position: absolute; left: 0; top: 0.05rem;
+      color: var(--terracota);
+      font-weight: 700;
+    }
+    .pp-card.propuesta { color: rgba(247,241,232,0.85); }
+    .pp-card.propuesta li::before {
+      content: "✓";
+      position: absolute; left: 0; top: 0.05rem;
+      color: #7fd092;
+      font-weight: 700;
+    }
+    .pp-card.propuesta li strong { color: var(--crema); }
+
+    /* ---------- Cómo funciona ---------- */
+    .pasos { display: grid; gap: 1.4rem; }
+    @media (min-width: 620px) { .pasos { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1000px) { .pasos { grid-template-columns: repeat(4, 1fr); } }
+    .paso-card {
+      background: var(--crema-2);
+      border: 1px solid var(--borde);
+      border-radius: var(--r-md);
+      padding: 1.8rem 1.6rem;
+      box-shadow: var(--sombra-suave);
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .paso-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -40px auto;
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      background: var(--bañado, rgba(196, 91, 60, 0.08));
+      transition: transform .35s ease;
+    }
+    .paso-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--sombra-fuerte);
+      border-color: rgba(196, 91, 60, 0.4);
+    }
+    .paso-card:hover::after { transform: scale(1.25); }
+    .paso-num {
+      font-family: var(--serif);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--terracota);
+      opacity: 0.7;
+    }
+    .paso-icon { font-size: 2rem; line-height: 1; margin: 0.4rem 0 0.7rem; position: relative; z-index: 1; }
+    .paso-card h3 { font-size: 1.3rem; margin-bottom: 0.45rem; position: relative; z-index: 1; }
+    .paso-card p { color: var(--carbon-suave); font-size: 0.98rem; margin: 0; position: relative; z-index: 1; }
+
+    /* ---------- Balance de impacto ---------- */
+    .impacto { background: var(--oliva); color: var(--crema); border-block: 1px solid var(--oliva-osc); }
+    .impacto .eyebrow { background: rgba(247,241,232,0.16); color: var(--crema); }
+    .impacto h2 { color: var(--crema-2); }
+    .impacto .sect-head p { color: rgba(247,241,232,0.82); }
+    .impacto-grid { display: grid; gap: clamp(2rem, 5vw, 3.5rem); align-items: center; }
+    @media (min-width: 920px) { .impacto-grid { grid-template-columns: 1fr 1fr; } }
+    .impacto-copy p { color: rgba(247,241,232,0.86); }
+    .impacto-copy .resaltado {
+      display: inline-block;
+      background: var(--ocre);
+      color: var(--carbon);
+      font-weight: 600;
+      padding: 0.05rem 0.5rem;
+      border-radius: 6px;
+    }
+    .no-inventa {
+      margin-top: 1.4rem;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--ocre);
+      background: rgba(247,241,232,0.08);
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      font-size: 0.98rem;
+    }
+
+    /* Tarjeta de balance */
+    .balance {
+      background: var(--crema-2);
+      color: var(--carbon);
+      border-radius: var(--r-md);
+      box-shadow: var(--sombra-fuerte);
+      overflow: hidden;
+      transform: rotate(-1.2deg);
+      transition: transform .3s ease;
+    }
+    .balance:hover { transform: rotate(0deg) translateY(-4px); }
+    .balance-head {
+      background: var(--carbon);
+      color: var(--crema);
+      padding: 1.1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+    .balance-head .emoji { font-size: 1.4rem; }
+    .balance-head .titulo { font-family: var(--serif); font-weight: 600; font-size: 1.15rem; }
+    .balance-head .sub { display:block; font-family: var(--sans); font-weight: 400; font-size: 0.78rem; color: rgba(247,241,232,0.7); letter-spacing: 0.02em; }
+    .balance-body { padding: 0.6rem 1.4rem 1.2rem; }
+    .balance-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 0;
+      border-bottom: 1px dashed var(--borde);
+    }
+    .balance-row:last-child { border-bottom: none; }
+    .balance-row .label { color: var(--carbon-suave); font-size: 0.95rem; }
+    .balance-row .valor { font-family: var(--serif); font-weight: 600; font-size: 1.5rem; color: var(--oliva-osc); }
+    .balance-row .valor small { font-family: var(--sans); font-weight: 500; font-size: 0.8rem; color: var(--carbon-suave); }
+    .balance-foot {
+      background: rgba(91, 107, 74, 0.10);
+      padding: 0.85rem 1.4rem;
+      font-size: 0.82rem;
+      color: var(--carbon-suave);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* ---------- WhatsApp / costo cero ---------- */
+    .feats { display: grid; gap: 1.4rem; }
+    @media (min-width: 720px) { .feats { grid-template-columns: repeat(3, 1fr); } }
+    .feat {
+      padding: 1.7rem;
+      border-radius: var(--r-md);
+      background: var(--crema-2);
+      border: 1px solid var(--borde);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .feat:hover { transform: translateY(-4px); box-shadow: var(--sombra-suave); }
+    .feat .icon {
+      width: 48px; height: 48px;
+      display: grid; place-items: center;
+      border-radius: var(--r-sm);
+      background: rgba(232, 163, 61, 0.16);
+      font-size: 1.5rem;
+      margin-bottom: 0.9rem;
+    }
+    .feat h3 { font-size: 1.22rem; margin-bottom: 0.4rem; }
+    .feat p { color: var(--carbon-suave); font-size: 0.97rem; margin: 0; }
+
+    /* ---------- CTA final ---------- */
+    .cta-final { text-align: center; }
+    .cta-box {
+      background: linear-gradient(160deg, #C45B3C, #A8482D);
+      color: var(--crema-2);
+      border-radius: var(--r-lg);
+      padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 5vw, 4rem);
+      box-shadow: var(--sombra-fuerte);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: "";
+      position: absolute;
+      inset: -40% auto auto -10%;
+      width: 50%; aspect-ratio: 1;
+      background: radial-gradient(circle, rgba(232, 163, 61, 0.4), transparent 70%);
+      pointer-events: none;
+    }
+    .cta-box h2 { color: var(--crema-2); font-size: clamp(2rem, 5vw, 3.2rem); position: relative; }
+    .cta-box p { color: rgba(253, 250, 244, 0.9); max-width: 46ch; margin-inline: auto; position: relative; font-size: 1.1rem; }
+    .cta-box .btn { position: relative; margin-top: 1.4rem; }
+    .cta-box .btn-primary {
+      background: var(--crema-2);
+      color: var(--terracota-osc);
+      box-shadow: 0 8px 24px rgba(43,37,33,0.25);
+    }
+    .cta-box .btn-primary:hover { background: #fff; }
+
+    /* ---------- Footer ---------- */
+    footer {
+      padding-block: 3rem 2.5rem;
+      border-top: 1px solid var(--borde);
+      background: var(--crema);
+    }
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 0.5rem; font-family: var(--serif); font-size: 1.2rem; }
+    .footer-meta { color: var(--carbon-suave); font-size: 0.9rem; max-width: 48ch; }
+    .footer-links { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+    .footer-links a { text-decoration: none; color: var(--carbon-suave); font-size: 0.92rem; }
+    .footer-links a:hover { color: var(--terracota-osc); }
+
+    /* ---------- Animaciones scroll ---------- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1);
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal.d1 { transition-delay: .08s; }
+    .reveal.d2 { transition-delay: .16s; }
+    .reveal.d3 { transition-delay: .24s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .balance { transform: none; }
+      *, *::before, *::after {
+        animation-duration: .001ms !important;
+        transition-duration: .001ms !important;
+      }
+    }
+
+    .skip-link {
+      position: absolute;
+      left: -999px;
+      top: 0;
+      background: var(--carbon);
+      color: var(--crema);
+      padding: 0.7rem 1.1rem;
+      border-radius: 0 0 var(--r-sm) 0;
+      z-index: 100;
+    }
+    .skip-link:focus { left: 0; }
+  </style>
+</head>
+<body>
+  <a href="#contenido" class="skip-link">Saltar al contenido</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap nav-inner">
+      <a href="#inicio" class="logo" aria-label="Hornero, inicio">
+        <span class="bird" aria-hidden="true">🐦</span> Hornero
+      </a>
+      <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#balance">Balance de impacto</a>
+        <a href="#por-que">Por qué WhatsApp</a>
+      </nav>
+      <a href="#empezar" class="btn btn-primary nav-cta">Empezá gratis</a>
+    </div>
+  </header>
+
+  <main id="contenido">
+
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="inicio">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <span class="eyebrow reveal">🐦 Agente para ONGs · Vive en WhatsApp</span>
+          <h1 class="reveal d1">La coordinación y el impacto de tu ONG, <span class="acento">donde tu equipo ya está</span>: WhatsApp.</h1>
+          <p class="lead reveal d2">Hornero es un agente que coordina personas y tareas, asigna con doble aprobación y mide resultados reales. Sin instalar nada, sin capacitación.</p>
+          <div class="hero-cta reveal d2">
+            <a href="#demo" class="btn btn-primary">Ver la demo</a>
+            <a href="#empezar" class="btn btn-ghost">Empezá gratis</a>
+          </div>
+          <p class="hero-note reveal d3"><span class="dot" aria-hidden="true"></span> Adopción del 100%: tu equipo ya sabe usar WhatsApp.</p>
+        </div>
+
+        <div class="hero-media reveal d2" id="demo">
+          <div class="video-frame">
+            <video
+              id="hero-video"
+              src="hornero-v2.mp4"
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              controls
+              aria-label="Demo de Hornero coordinando tareas dentro de una conversación de WhatsApp">
+              Tu navegador no puede reproducir el video. <a href="hornero-v2.mp4">Descargá la demo</a>.
+            </video>
+            <span class="video-tag">Demo en WhatsApp</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROBLEMA → PROPUESTA ============ -->
+    <section class="banda-crema-2" id="problema">
+      <div class="wrap">
+        <div class="sect-head reveal">
+          <span class="eyebrow">El problema</span>
+          <h2>Las ONGs chicas no pierden por falta de ganas. Pierden por falta de coordinación.</h2>
+          <p>Tareas que se caen, conocimiento que se va con cada voluntario y un impacto enorme que nunca queda registrado.</p>
+        </div>
+        <div class="pp-grid">
+          <div class="pp-card problema reveal d1">
+            <h3>Lo que pasa hoy</h3>
+            <ul>
+              <li>El "quién hace qué" vive en la cabeza de una sola persona.</li>
+              <li>Cuando se va un voluntario, se va su conocimiento.</li>
+              <li>Toda herramienta nueva exige instalar, registrarse y capacitar… y nadie la usa.</li>
+              <li>El impacto real existe, pero nunca se mide ni se puede mostrar.</li>
+            </ul>
+          </div>
+          <div class="pp-card propuesta reveal d2">
+            <h3>Lo que hace Hornero</h3>
+            <ul>
+              <li><strong>Vive en WhatsApp</strong>, donde tu equipo ya conversa todos los días.</li>
+              <li><strong>Recuerda</strong> e infiere el conocimiento de la organización, pase lo que pase.</li>
+              <li><strong>Cero fricción:</strong> sin apps, sin instalaciones, sin capacitación.</li>
+              <li><strong>Mide el impacto</strong> con números concretos, listos para mostrar.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CÓMO FUNCIONA ============ -->
+    <section id="como-funciona">
+      <div class="wrap">
+        <div class="sect-head centrado reveal">
+          <span class="eyebrow">Cómo funciona</span>
+          <h2>Cuatro cosas, un solo lugar</h2>
+          <p>Hornero acompaña el ciclo completo del trabajo de tu organización, todo dentro del chat.</p>
+        </div>
+        <div class="pasos">
+          <article class="paso-card reveal d1" style="--bañado: rgba(196,91,60,0.10)">
+            <span class="paso-num">01</span>
+            <div class="paso-icon" aria-hidden="true">🧭</div>
+            <h3>Coordina</h3>
+            <p>Registra personas y tareas, y conoce los skills y la carga de cada uno para no sobrecargar a nadie.</p>
+          </article>
+          <article class="paso-card reveal d2" style="--bañado: rgba(232,163,61,0.14)">
+            <span class="paso-num">02</span>
+            <div class="paso-icon" aria-hidden="true">🤝</div>
+            <h3>Asigna con doble aprobación</h3>
+            <p>El agente propone el mejor responsable, un coordinador aprueba y la persona confirma con un botón. Humano en el centro.</p>
+          </article>
+          <article class="paso-card reveal d3" style="--bañado: rgba(91,107,74,0.14)">
+            <span class="paso-num">03</span>
+            <div class="paso-icon" aria-hidden="true">🪺</div>
+            <h3>Recuerda</h3>
+            <p>Guarda e infiere el conocimiento de la organización. No se va cuando se va un voluntario.</p>
+          </article>
+          <article class="paso-card reveal d3" style="--bañado: rgba(196,91,60,0.12)">
+            <span class="paso-num">04</span>
+            <div class="paso-icon" aria-hidden="true">📊</div>
+            <h3>Mide el impacto</h3>
+            <p>Cuando una tarea termina, arma un Balance de Impacto con números reales. Nunca inventa: solo lo que respondiste.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BALANCE DE IMPACTO ============ -->
+    <section class="impacto" id="balance">
+      <div class="wrap impacto-grid">
+        <div class="impacto-copy reveal">
+          <span class="eyebrow">La función estrella</span>
+          <h2>El Balance de Impacto</h2>
+          <p>Como un balance contable, pero la moneda es el <span class="resaltado">impacto</span>. Cuando una tarea se cierra, Hornero te hace unas pocas preguntas y arma un resumen claro, con números que podés mostrar a tu equipo, a tus donantes y a tu comunidad.</p>
+          <div class="no-inventa">
+            <strong>Nunca inventa números.</strong> Solo registra lo que responde la persona que estuvo ahí. Si no hay dato, no hay número.
+          </div>
+        </div>
+
+        <div class="impacto-card reveal d2">
+          <article class="balance" aria-label="Ejemplo de tarjeta de Balance de Impacto">
+            <header class="balance-head">
+              <span class="emoji" aria-hidden="true">📊</span>
+              <span class="titulo">Charla de RCP
+                <span class="sub">Balance de Impacto · cerrado por María</span>
+              </span>
+            </header>
+            <div class="balance-body">
+              <div class="balance-row">
+                <span class="label">Personas formadas</span>
+                <span class="valor">40 <small>personas</small></span>
+              </div>
+              <div class="balance-row">
+                <span class="label">Tiempo invertido</span>
+                <span class="valor">2 <small>horas</small></span>
+              </div>
+              <div class="balance-row">
+                <span class="label">La valoró útil</span>
+                <span class="valor">85<small>%</small></span>
+              </div>
+              <div class="balance-row">
+                <span class="label">Voluntarios a cargo</span>
+                <span class="valor">3 <small>personas</small></span>
+              </div>
+            </div>
+            <footer class="balance-foot">
+              <span aria-hidden="true">✅</span> Datos reportados por el equipo. Sin estimaciones.
+            </footer>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ POR QUÉ WHATSAPP / COSTO CERO ============ -->
+    <section id="por-que">
+      <div class="wrap">
+        <div class="sect-head centrado reveal">
+          <span class="eyebrow">Por qué funciona</span>
+          <h2>Donde el equipo ya está, a un costo casi cero</h2>
+          <p>No te pedimos cambiar de herramienta. Nos sumamos a la que ya usás todos los días.</p>
+        </div>
+        <div class="feats">
+          <div class="feat reveal d1">
+            <div class="icon" aria-hidden="true">💬</div>
+            <h3>100% de adopción</h3>
+            <p>Vive en WhatsApp: tu equipo ya sabe usarlo. Fricción cero, sin apps ni capacitaciones.</p>
+          </div>
+          <div class="feat reveal d2">
+            <div class="icon" aria-hidden="true">🪙</div>
+            <h3>Costo casi cero</h3>
+            <p>Funciona con los planes gratuitos de Kapso y Supabase. Meta no cobra el uso reactivo dentro de la ventana de 24 horas.</p>
+          </div>
+          <div class="feat reveal d3">
+            <div class="icon" aria-hidden="true">🪺</div>
+            <h3>Construido para durar</h3>
+            <p>Como el hornero, que arma su nido de barro con dedicación: Hornero ayuda a construir y sostener el trabajo en equipo.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA FINAL ============ -->
+    <section class="cta-final" id="empezar">
+      <div class="wrap">
+        <div class="cta-box reveal">
+          <h2>Empezá a coordinar en WhatsApp</h2>
+          <p>Sumá a Hornero a tu organización y convertí el trabajo diario en impacto medible. Sin instalar nada, sin capacitación, hoy mismo.</p>
+          <a href="#demo" class="btn btn-primary">Ver la demo de nuevo</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div>
+        <div class="footer-brand"><span aria-hidden="true">🐦</span> Hornero</div>
+        <p class="footer-meta">El hornero es el pájaro nacional argentino, conocido por construir su nido de barro con dedicación. Como él, ayudamos a tu ONG a construir y coordinar su trabajo en equipo.</p>
+      </div>
+      <nav class="footer-links" aria-label="Enlaces del pie de página">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#balance">Balance de impacto</a>
+        <a href="#por-que">Por qué WhatsApp</a>
+        <a href="#empezar">Empezá</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // Sombra del nav al hacer scroll
+      var nav = document.getElementById('nav');
+      var onScroll = function () {
+        if (window.scrollY > 8) nav.classList.add('scrolled');
+        else nav.classList.remove('scrolled');
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Reveal al hacer scroll (IntersectionObserver)
+      var reveals = document.querySelectorAll('.reveal');
+      if (reduceMotion || !('IntersectionObserver' in window)) {
+        reveals.forEach(function (el) { el.classList.add('visible'); });
+      } else {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              io.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        reveals.forEach(function (el) { io.observe(el); });
+      }
+
+      // Video: respetar prefers-reduced-motion.
+      // Sin reduce-motion: autoplay silencioso. Con reduce-motion: pausado, con controles.
+      var video = document.getElementById('hero-video');
+      if (video) {
+        if (reduceMotion) {
+          video.removeAttribute('autoplay');
+          video.pause();
+        } else {
+          video.setAttribute('autoplay', '');
+          var tryPlay = video.play();
+          if (tryPlay && typeof tryPlay.catch === 'function') {
+            tryPlay.catch(function () { /* el usuario puede usar los controles */ });
+          }
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
