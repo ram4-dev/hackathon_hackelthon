@@ -365,12 +365,100 @@ Resultados esperados:
 
 ### SPEC-D.3 — Personas
 **Funciones:** `db.upsertPerson`, `db.getPersonByPhone`, `db.listCoordinators`.
+
+**Comportamiento:** implementar las funciones de personas de SPEC-00 §4.1 contra Supabase Cloud usando `supabase-js` server-side. Esta spec empieza la capa `db.*` real; no cambia el esquema.
+
+**Precondición:** SPEC-D.1 aplicado. SPEC-D.2 no es bloqueante para implementar D.3, pero sus datos sirven para validar `listCoordinators`.
+
+**Contrato de funciones:**
+
+```ts
+db.upsertPerson(input: {
+  wa_phone: string
+  name?: string
+  role?: string
+  skills?: string[]
+  capacity?: Capacity
+  is_coordinator?: boolean
+}): Promise<Person>
+
+db.getPersonByPhone(wa_phone: string): Promise<Person | null>
+
+db.listCoordinators(): Promise<Person[]>
+```
+
+**Reglas de implementación:**
+- `upsertPerson` usa `wa_phone` como clave natural (`people.wa_phone unique`).
+- Insert:
+  - `wa_phone` requerido.
+  - `name` en SPEC-00 es opcional, pero `people.name` es `not null`; si falta, insertar `name = wa_phone` como placeholder determinista.
+  - defaults: `capacity='media'`, `is_coordinator=false`, `skills=[]`, `active=true`, `timezone='America/Argentina/Buenos_Aires'`.
+- Update:
+  - no duplica fila.
+  - mergea solo campos presentes en `input`.
+  - si `name` falta, conserva el nombre existente.
+  - si `skills` falta, conserva skills existentes; si viene `[]`, actualiza a arreglo vacío.
+  - si `is_coordinator` falta, conserva valor existente; si viene `false`, actualiza a false.
+- `getPersonByPhone`:
+  - busca por `wa_phone`.
+  - devuelve `null` si Supabase responde 0 filas (`maybeSingle`/equivalente), no tira error.
+- `listCoordinators`:
+  - filtra `is_coordinator = true` y `active = true`.
+  - orden sugerido: `created_at asc`.
+- Todas las funciones devuelven el shape `Person` de SPEC-00, con timestamps serializados como string ISO por Supabase.
+
+**Delegación a Antigravity/Codex executor:** D.3 se puede implementar cuando D.2 termine o en paralelo si el executor tiene acceso a repo + env local. Codex en esta sesión prepara la spec y el artifact; el executor que tenga credenciales Supabase debe completar la validación live.
+
+Tasks para executor:
+- [ ] Agregar dependencia runtime `@supabase/supabase-js` si todavía no existe.
+- [ ] Crear el cliente server-side con `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`.
+- [ ] Exportar las tres funciones D.3 desde el módulo `db.*` acordado por el equipo.
+- [ ] Agregar tipos `Person`, `Capacity` compatibles con SPEC-00 si todavía no existen.
+- [ ] Agregar tests unitarios con Supabase mock/stub para insert, update, null y coordinadores.
+- [ ] Ejecutar validación live contra Supabase Cloud cuando haya credenciales.
+
 **Criterios de aceptación:**
 - [ ] `upsertPerson` inserta si el `wa_phone` no existe y **actualiza** si existe (no duplica).
 - [ ] Defaults aplicados: `capacity='media'`, `is_coordinator=false`, `skills=[]`, `active=true`, `timezone` AR.
 - [ ] `getPersonByPhone` devuelve `null` (no error) si no existe.
 - [ ] `listCoordinators` solo trae `is_coordinator=true` y `active=true`.
-**Validación:** test: upsert dos veces el mismo `wa_phone` → 1 sola fila, datos mergeados.
+
+**Validación unitaria mínima:**
+- `upsertPerson({ wa_phone })` crea 1 fila con defaults y `name = wa_phone`.
+- `upsertPerson({ wa_phone, name:'A', skills:['datos'], is_coordinator:true })` y luego `upsertPerson({ wa_phone, role:'Ops', skills:[] })` deja 1 sola fila, conserva `name='A'`, actualiza `role='Ops'`, actualiza `skills=[]`, conserva `is_coordinator=true`.
+- `getPersonByPhone('no-existe')` devuelve `null`.
+- `listCoordinators()` no devuelve personas inactivas ni no coordinadoras.
+
+**Validación live SQL opcional:** si el executor valida directo en Supabase, usar un teléfono reservado y limpiar al final.
+
+```sql
+delete from people where wa_phone = '5491100000099';
+
+insert into people (wa_phone, name)
+values ('5491100000099', '5491100000099')
+on conflict (wa_phone) do update
+set name = excluded.name
+returning wa_phone, name, capacity, is_coordinator, skills, active, timezone;
+
+update people
+set name = 'Persona D3',
+    role = 'Ops',
+    skills = '{}',
+    is_coordinator = true
+where wa_phone = '5491100000099'
+returning wa_phone, name, role, skills, is_coordinator;
+
+select count(*) as rows_for_phone
+from people
+where wa_phone = '5491100000099';
+
+select wa_phone, name
+from people
+where is_coordinator = true and active = true
+order by created_at asc;
+
+delete from people where wa_phone = '5491100000099';
+```
 
 ### SPEC-D.4 — Tareas + tablero
 **Funciones:** `db.createTask`, `db.listTasks`, `db.setTaskStatus`, `db.getBoard`.
