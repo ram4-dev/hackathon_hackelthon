@@ -2,14 +2,14 @@ import { join } from "node:path";
 import type {
 	ConversationState,
 	ImportStagingItem,
+	LegacyPriority as Priority,
+	LegacyTaskStatus as TaskStatus,
 	Member,
 	Organization,
 	PendingImportBatch,
-	Priority,
 	Reminder,
 	SourceType,
 	Task,
-	TaskStatus,
 } from "../domain/types.js";
 import { appendBlock, parseBlocks } from "./markdownBlocks.js";
 import {
