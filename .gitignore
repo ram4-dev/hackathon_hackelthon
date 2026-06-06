@@ -16,3 +16,4 @@ coverage/
 # Runtime demo data
 /data/**
 !/data/.gitkeep
+.vercel

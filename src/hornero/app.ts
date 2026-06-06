@@ -6,11 +6,13 @@ import { Hono } from "hono";
 import { handleInbound, type InboundPayload } from "../../lib/webhook.js";
 import { verifyKapsoSignature } from "../kapso/verifyWebhook.js";
 
-export const app = new Hono();
+// basePath "/api" → rutas finales /api/health y /api/webhook (alineado con el catch-all
+// api/[[...route]].ts de Vercel y con el server local).
+export const app = new Hono().basePath("/api");
 
 app.get("/health", (c) => c.text("ok"));
 
-app.post("/api/webhook", async (c) => {
+app.post("/webhook", async (c) => {
 	const raw = await c.req.text();
 
 	// SPEC-B.5: verificación de firma si KAPSO_WEBHOOK_SECRET está configurado (PR#3).

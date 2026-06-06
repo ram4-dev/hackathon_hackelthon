@@ -48,8 +48,10 @@ const TASK_TYPES: TaskType[] = [
 	"otro",
 ];
 
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+// Placeholders import-safe: createClient no debe tirar al importar sin env (modo mock).
+// El cliente es lazy — no conecta hasta ejecutar una query (solo en modo Supabase real).
+const supabaseUrl = process.env.SUPABASE_URL || "https://placeholder.supabase.co";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-key";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 

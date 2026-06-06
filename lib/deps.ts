@@ -4,11 +4,16 @@
 //   - db    → Supabase real (lib/db.ts) si hay SUPABASE_URL; si no, mock en memoria (demo).
 //   - send  → Kapso real (lib/kapso.ts) si hay KAPSO_API_KEY+PHONE_ID; si no, mock que loguea.
 //   - model → proveedor del AI SDK (lib/model.ts).
-// Así el harness/demo corre sin credenciales y el webhook usa la infra real cuando está set.
+// Imports ESTÁTICOS (sin top-level await): el cliente Supabase es import-safe (lazy) y kapso
+// lee su env recién al enviar, así que importar ambos sin credenciales no rompe nada — clave
+// para que la función serverless (Vercel) no se cuelgue en el cold start.
 
 import type { LanguageModel } from "ai";
 import type { Db, Send } from "./contracts.js";
+import { db as realDb } from "./db.js";
+import * as kapso from "./kapso.js";
 import { createModel } from "./model.js";
+import { db as mockDb, sendButtons as mSendButtons, sendList as mSendList, sendText as mSendText } from "./mocks.js";
 
 export interface Deps {
 	db: Db;
@@ -26,11 +31,10 @@ const mockSend = forceMock || process.env.HORNERO_MOCK_SEND === "1";
 const useSupabase = !forceMock && !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 const useKapso = !mockSend && !!process.env.KAPSO_API_KEY && !!process.env.KAPSO_PHONE_NUMBER_ID;
 
-// Import dinámico: lib/db.ts crea el cliente Supabase al importarse, así que solo lo
-// cargamos cuando está configurado (evita romper el modo mock sin credenciales).
-const db: Db = useSupabase ? (await import("./db.js")).db : (await import("./mocks.js")).db;
-const sendMod = useKapso ? await import("./kapso.js") : await import("./mocks.js");
-const send: Send = { sendText: sendMod.sendText, sendButtons: sendMod.sendButtons, sendList: sendMod.sendList };
+const db: Db = useSupabase ? realDb : mockDb;
+const send: Send = useKapso
+	? { sendText: kapso.sendText, sendButtons: kapso.sendButtons, sendList: kapso.sendList }
+	: { sendText: mSendText, sendButtons: mSendButtons, sendList: mSendList };
 
 if (!process.env.VITEST) {
 	console.error(`[deps] db=${useSupabase ? "supabase" : "mock"} · send=${useKapso ? "kapso" : "mock"}`);

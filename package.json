@@ -20,6 +20,7 @@
     "@hono/node-server": "latest",
     "@kapso/whatsapp-cloud-api": "latest",
     "@supabase/supabase-js": "^2.107.0",
+    "@vercel/functions": "^3.6.2",
     "ai": "latest",
     "dotenv": "^17.4.2",
     "hono": "latest",
