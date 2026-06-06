@@ -1,0 +1,28 @@
+src/lib/db.ts
+  s_db997c4596fb5e::t_ec65ea3a1b4c15 164-174
+  s_db997c4596fb5e::t_703f6619adc927 1,53-75
+src/lib/db.test.ts
+  s_db997c4596fb5e::t_a71c62695f2627 123-137
+src/domain/textHandler.ts
+  s_db997c4596fb5e::t_9d74abd52dbac9 1-6,10-42,49-64
+src/domain/textHandler.test.ts
+  s_db997c4596fb5e::t_6c56ef4e415b35 1-60
+src/domain/processInboundMessage.ts
+  s_db997c4596fb5e::t_0e62382d5af045 17,67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "4f7a4e0e3cdb03890e45de61e542a807af2e28c6",
+  "prompts": {},
+  "sessions": {
+    "s_db997c4596fb5e": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9ea9-5c8c-7c6f-bfd5-593f1a826968",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
