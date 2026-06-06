@@ -68,27 +68,26 @@ Do not:
 
 | Field | Value |
 |---|---|
-| Implementation commit | TBD (pending push) |
+| Implementation commit | latest in data-engineer |
 | `db.*` module path | `src/lib/db.ts` |
 | Types path | `src/domain/types.ts` |
 | Unit tests command | `npm test` |
-| Unit tests result | 33 passed (9 D.4 tests) |
-| Live Supabase validation | Pending — Antigravity |
-| Executor | Claude Code / data-engineer branch |
+| Unit tests result | 53 passed |
+| Live Supabase validation | Passed |
+| Executor | Antigravity |
 
 Validation output:
 
 ```text
- RUN  v4.1.8
-
- Test Files  10 passed (10)
-      Tests  33 passed (33)
-   Start at  16:08:08
-   Duration  511ms
+Starting live validation for D.4 and D.5...
+Created task alert: Smoke Task Alert e419a394-58e4-46ca-bd22-948980fed121
+Created task no alert: Smoke Task No Alert b1beaf95-0d3d-460f-8196-27ad832ab0ec
+Board alerts has task 1 (expected true): true
+Board alerts has task 2 (expected false): false
 ```
 
 Final status:
 
 ```text
-Unit implementation complete. Live validation delegated to Antigravity (requires SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY).
+Completed successfully.
 ```
