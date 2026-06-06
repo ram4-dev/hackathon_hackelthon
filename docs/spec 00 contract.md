@@ -1,4 +1,4 @@
-# SPEC-00 · Contrato compartido y Constitución (Pulso)
+# SPEC-00 · Contrato compartido y Constitución (Hornero)
 
 > **Esto es la fuente de verdad.** Las tres specs de rol (Backend, Data, ML) implementan o consumen lo definido acá. Metodología: *Spec-Driven Development* nivel **spec-anchored** — la spec manda, el código se valida contra los **criterios de aceptación** (que funcionan como *validation gates*). Workflow por spec: **Specify → Plan → Implement → Validate**.
 >

@@ -108,7 +108,7 @@ export async function dispatch(line: string): Promise<boolean> {
 }
 
 async function main(): Promise<void> {
-	console.log("💬 Pulso — harness local. /help para comandos. Usuario actual:", currentUser);
+	console.log("💬 Hornero — harness local. /help para comandos. Usuario actual:", currentUser);
 
 	if (process.stdin.isTTY) {
 		// Modo interactivo (terminal real).

@@ -26,7 +26,7 @@ async function say(line: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
-	console.log("🎬 Pulso — DEMO e2e contra mocks\n");
+	console.log("🎬 Hornero — DEMO e2e contra mocks\n");
 
 	act("ACTO 1 · Onboarding de una persona nueva");
 	await say("/user 5491100000099");
