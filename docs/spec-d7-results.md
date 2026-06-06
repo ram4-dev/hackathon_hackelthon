@@ -41,8 +41,8 @@ Homework checklist:
 | `addKnowledge` explicit kind/tags | stored as provided | **PASS** (unit test) |
 | `updateKnowledge` patches in-place | modified row returned | **PASS** (unit test) |
 | `updateKnowledge` empty patch | rejects before Supabase | **PASS** (unit test) |
-| Live: `loadKnowledge` after seed | returns D.2 seed rows | Pending Antigravity |
-| Live: `updateKnowledge` reflected | `loadKnowledge` shows updated content | Pending Antigravity |
+| Live: `loadKnowledge` after seed | returns D.2 seed rows | **PASS** |
+| Live: `updateKnowledge` reflected | `loadKnowledge` shows updated content | **PASS** |
 
 ---
 
@@ -59,27 +59,26 @@ Homework checklist:
 
 | Field | Value |
 |---|---|
-| Implementation commit | TBD (pending push) |
+| Implementation commit | latest in data-engineer |
 | `db.*` module path | `src/lib/db.ts` |
 | Types path | `src/domain/types.ts` |
 | Unit tests command | `npm test` |
-| Unit tests result | 53 passed (5 D.7 tests) |
-| Live Supabase validation | Pending — Antigravity |
-| Executor | Claude Code / data-engineer branch |
+| Unit tests result | 53 passed |
+| Live Supabase validation | Passed |
+| Executor | Antigravity |
 
 Validation output:
 
 ```text
- RUN  v4.1.8
-
- Test Files  10 passed (10)
-      Tests  53 passed (53)
-   Start at  16:12:59
-   Duration  519ms
+=== D.7 Knowledge ===
+Seed rows found (expected 5): 5
+Added knowledge defaults -> kind: hecho tags: []
+Updated knowledge -> content: Updated tags: [ 'x' ]
+Loaded knowledge reflects update: true
 ```
 
 Final status:
 
 ```text
-Unit implementation complete. Live validation delegated to Antigravity.
+Completed successfully.
 ```
