@@ -85,37 +85,64 @@ Comandos:
 Cualquier otra cosa se manda al agente como texto.`);
 }
 
+/** Procesa una línea. Devuelve false para terminar el loop. */
+async function dispatch(line: string): Promise<boolean> {
+	if (line === "/exit") return false;
+	if (line === "/help") {
+		help();
+	} else if (line.startsWith("/user ")) {
+		currentUser = line.slice(6).trim();
+		console.log("👤 Usuario:", currentUser);
+	} else if (line.startsWith("/btn ")) {
+		await simulateButton(line.slice(5).trim());
+	} else if (line === "/who") {
+		for (const p of await deps.db.listPeople()) {
+			console.log(`  ${p.id} ${p.name} (${p.wa_phone})${p.is_coordinator ? " [coord]" : ""} skills=${p.skills.join("/")}`);
+		}
+	} else if (line === "/board") {
+		console.log(JSON.stringify(await deps.db.getBoard(), null, 2));
+	} else {
+		await runAgent(currentUser, line, deps);
+	}
+	return true;
+}
+
 async function main(): Promise<void> {
-	const rl = createInterface({ input: process.stdin, output: process.stdout });
 	console.log("💬 Pulso — harness local. /help para comandos. Usuario actual:", currentUser);
 
-	while (true) {
-		const line = (await rl.question(`\n[${currentUser}] › `)).trim();
-		if (!line) continue;
-
-		try {
-			if (line === "/exit") break;
-			else if (line === "/help") help();
-			else if (line.startsWith("/user ")) {
-				currentUser = line.slice(6).trim();
-				console.log("👤 Usuario:", currentUser);
-			} else if (line.startsWith("/btn ")) {
-				await simulateButton(line.slice(5).trim());
-			} else if (line === "/who") {
-				for (const p of await deps.db.listPeople()) {
-					console.log(`  ${p.id} ${p.name} (${p.wa_phone})${p.is_coordinator ? " [coord]" : ""} skills=${p.skills.join("/")}`);
-				}
-			} else if (line === "/board") {
-				console.log(JSON.stringify(await deps.db.getBoard(), null, 2));
-			} else {
-				await runAgent(currentUser, line, deps);
+	if (process.stdin.isTTY) {
+		// Modo interactivo (terminal real).
+		const rl = createInterface({ input: process.stdin, output: process.stdout });
+		while (true) {
+			let line: string;
+			try {
+				line = (await rl.question(`\n[${currentUser}] › `)).trim();
+			} catch {
+				break; // Ctrl-D / stdin cerrado
 			}
-		} catch (e) {
-			console.error("⚠️ ", e instanceof Error ? e.message : e);
+			if (!line) continue;
+			try {
+				if (!(await dispatch(line))) break;
+			} catch (e) {
+				console.error("⚠️ ", e instanceof Error ? e.message : e);
+			}
+		}
+		rl.close();
+	} else {
+		// Modo scripted (entrada por pipe): leemos todo y procesamos línea por línea.
+		let data = "";
+		for await (const chunk of process.stdin) data += chunk;
+		for (const raw of data.split("\n")) {
+			const line = raw.trim();
+			if (!line) continue;
+			console.log(`\n[${currentUser}] › ${line}`);
+			try {
+				if (!(await dispatch(line))) break;
+			} catch (e) {
+				console.error("⚠️ ", e instanceof Error ? e.message : e);
+			}
 		}
 	}
-
-	rl.close();
 }
 
 main().catch((e) => {

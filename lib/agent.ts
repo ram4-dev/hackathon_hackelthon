@@ -235,7 +235,16 @@ export async function runAgent(waPhone: string, text: string, deps: Deps = defau
 	// 3) Loop del agente con todas las tools (multi-paso).
 	const tracker: SendTracker = { count: 0, bodies: [] };
 	const tools = buildTools(deps, waPhone, person, tracker);
-	const result = await generateText({ model, system, messages, tools, stopWhen: stepCountIs(8) });
+	// Timeout defensivo: si el proveedor LLM se cuelga, abortamos en vez de colgar el proceso.
+	const timeoutMs = Number(process.env.AGENT_TIMEOUT_MS ?? 90000);
+	const result = await generateText({
+		model,
+		system,
+		messages,
+		tools,
+		stopWhen: stepCountIs(8),
+		abortSignal: AbortSignal.timeout(timeoutMs),
+	});
 
 	// 4) Respuesta: si el agente no mandó nada por tools pero dejó texto, lo mandamos (fallback).
 	const reply = result.text?.trim();
