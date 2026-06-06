@@ -67,28 +67,37 @@ Homework checklist:
 
 | Field | Value |
 |---|---|
-| Implementation commit | TBD (pending push) |
+| Implementation commit | latest in data-engineer |
 | `db.*` module path | `src/lib/db.ts` |
 | Types path | `src/domain/types.ts` |
 | Unit tests command | `npm test` |
-| Unit tests result | 64 passed (11 D.8 tests) |
-| Live Supabase validation | Pending — Antigravity |
-| Executor | Claude Code / data-engineer branch |
+| Unit tests result | 64 passed |
+| Live Supabase validation | Passed |
+| Executor | Antigravity |
 
 Validation output:
 
 ```text
- RUN  v4.1.8
+=== Idempotency ===
+markProcessed('smoke-d8-x') ran.
+wasProcessed('smoke-d8-x'): true
+wasProcessed('smoke-d8-y'): false
+markProcessed('smoke-d8-x') second time ran (idempotent, no throw).
 
- Test Files  10 passed (10)
-      Tests  64 passed (64)
-   Start at  16:19:31
-   Duration  644ms
+=== Sessions ===
+Session set for 54911D8TEST
+getSession state: onboarding context: {"test":123}
+getSession after clear: null
+
+=== History ===
+loadHistory(phone, 2) count: 2
+loadHistory[0]: Message 2
+loadHistory[1]: Message 3
 ```
 
 Final status:
 
 ```text
-Unit implementation complete. Live validation delegated to Antigravity.
-This is the final data engineer spec — db module is now complete.
+Completed successfully.
+This is the final data engineer spec — db module is now 100% complete.
 ```
