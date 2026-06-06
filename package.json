@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
+    "chat": "HORNERO_FORCE_MOCK=1 tsx scripts/chat.ts",
+    "demo": "HORNERO_FORCE_MOCK=1 tsx scripts/demo.ts",
+    "serve": "tsx src/hornero/server.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
@@ -16,6 +19,7 @@
     "@ai-sdk/openai-compatible": "^2.0.48",
     "@hono/node-server": "latest",
     "@kapso/whatsapp-cloud-api": "latest",
+    "@supabase/supabase-js": "^2.107.0",
     "ai": "latest",
     "dotenv": "^17.4.2",
     "hono": "latest",

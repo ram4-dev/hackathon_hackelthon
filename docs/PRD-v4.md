@@ -3,7 +3,7 @@
 > **Hackatón Solidaria (Halketon) — Paisanos · Crecimiento Build · Querido Lunes · Fardo**
 > Track 1 — Coordinación y memoria interna · 6 de junio de 2026
 > Equipo: 1 Backend · 1 ML · 1 Data Engineer · **Ventana: 4 horas para el MVP**
-> *Nombre de trabajo: **"Pulso"** · v4 (knowledge base estilo LLM Wiki, acceso a datos vía `supabase-js`, UI de WhatsApp precisada)*
+> *Nombre de trabajo: **"Hornero"** · v4 (knowledge base estilo LLM Wiki, acceso a datos vía `supabase-js`, UI de WhatsApp precisada)*
 
 ---
 
@@ -11,14 +11,14 @@
 
 Las ONGs chicas y sobrecargadas pierden la coordinación del trabajo cotidiano porque la información se dispersa entre WhatsApp, mail, Drive, Trello/Asana/Notion y planillas, y ninguna herramienta se sostiene en el tiempo. **El único canal que todos ya usan, todos los días, es WhatsApp.**
 
-Pulso es un **agente que vive dentro de WhatsApp** y cubre el ciclo completo del trabajo de la organización, de punta a punta:
+Hornero es un **agente que vive dentro de WhatsApp** y cubre el ciclo completo del trabajo de la organización, de punta a punta:
 
 1. **Coordina** — registra personas y tareas, sabe qué sabe hacer y qué tan cargada está cada persona, **propone asignaciones que un coordinador aprueba y la persona confirma con un botón**, y mantiene un tablero consultable.
 2. **Supervisa** — un coordinador/manager tiene la última palabra sobre quién hace qué, con la carga real de cada persona a la vista. Esto le da a la dirección el control que hoy no tiene.
 3. **Recuerda** — guarda e **infiere** el conocimiento de la organización, de modo que la memoria operativa no dependa de una sola persona (y no se vaya cuando se va un voluntario).
 4. **Mide** — cuando una tarea termina, el agente **infiere las preguntas justas según el tipo de tarea** y arma un **Balance de Impacto**: un cierre con números concretos, estilo balance contable, pero donde la "moneda" es el impacto generado.
 
-El valor es doble: resuelve el dolor **operativo** (coordinación + supervisión, Track 1) y el dolor **perenne de reportar impacto a donantes** —que hoy las ONGs hacen a mano, a fin de año, juntando datos dispersos. Con Pulso el impacto se captura en el momento, tarea por tarea, sin instalar nada y sin capacitación.
+El valor es doble: resuelve el dolor **operativo** (coordinación + supervisión, Track 1) y el dolor **perenne de reportar impacto a donantes** —que hoy las ONGs hacen a mano, a fin de año, juntando datos dispersos. Con Hornero el impacto se captura en el momento, tarea por tarea, sin instalar nada y sin capacitación.
 
 ---
 
@@ -34,7 +34,7 @@ El relevamiento de 16 organizaciones identificó dos dolores en el Track 1, y la
 
 **Por qué un agente con coordinador en el medio.** Equipos chicos no van a memorizar comandos. Un agente en lenguaje natural baja la fricción a "escribile como a un compañero". Pero la asignación de trabajo en una ONG no es 100 % automática: hay un coordinador que conoce el contexto, las prioridades y a la gente. Por eso el agente **propone** y el coordinador **decide** —el mejor de los dos mundos: la velocidad del agente con el criterio humano.
 
-**Por qué la rotación importa.** En ONGs la rotación de voluntarios es alta. Hoy, cuando alguien se va, se lleva el conocimiento (quién sabe hacer qué, cómo se hacía un proceso, qué impacto tuvo una actividad). La memoria inferida de Pulso convierte ese conocimiento tácito en memoria de la organización: **cuando un voluntario se va, lo que aprendió queda.**
+**Por qué la rotación importa.** En ONGs la rotación de voluntarios es alta. Hoy, cuando alguien se va, se lleva el conocimiento (quién sabe hacer qué, cómo se hacía un proceso, qué impacto tuvo una actividad). La memoria inferida de Hornero convierte ese conocimiento tácito en memoria de la organización: **cuando un voluntario se va, lo que aprendió queda.**
 
 ---
 
@@ -227,7 +227,7 @@ Al cerrar, el agente clasifica la tarea y genera **2-4 preguntas cuantificables 
 
 **Costo → near-zero para una ONG chica, con un asterisco honesto.**
 - **Kapso**: plan gratuito de **2.000 mensajes/mes** (cuenta entrantes + salientes), 1 número, agentes de IA + sandbox incluidos. Para una ONG chica, alcanza.
-- **Meta**: desde el 1/7/2025 los mensajes que **no** son template son **gratis dentro de la ventana de 24 h**; solo se cobran templates. Como Pulso es **reactivo**, el uso normal **no paga Meta**.
+- **Meta**: desde el 1/7/2025 los mensajes que **no** son template son **gratis dentro de la ventana de 24 h**; solo se cobran templates. Como Hornero es **reactivo**, el uso normal **no paga Meta**.
 - **LLM (tokens)**: único costo recurrente real; centavos al volumen de una ONG chica.
 - **Asterisco**: recordatorios proactivos fuera de las 24 h requieren template (poco, utility). Mitigación: mandarlos dentro de una conversación activa.
 - **Claim defendible (no decir "gratis"):** *"Corre en planes gratuitos de Kapso y Supabase; Meta no cobra el uso reactivo; el costo marginal por ONG es de centavos al mes."*
@@ -459,7 +459,7 @@ score(person, task) =
 **Mensaje central:** *la coordinación, la supervisión y la medición del impacto viven donde tu equipo ya está.*
 
 **Pitch de 30 segundos:**
-> *"Las ONGs chicas pierden la coordinación porque ninguna herramienta nueva les sobrevive —lo único que todos usan es WhatsApp. Pulso vive ahí adentro: el agente propone quién debería hacer cada tarea según su carga, el coordinador aprueba con un botón, la persona confirma, y cuando termina, el agente le hace las preguntas justas para armar un balance de impacto con números concretos —no es lo mismo medir una charla que un informe. Así la ONG coordina, supervisa y mide su impacto en el mismo lugar, sin instalar nada, y sin que el conocimiento se vaya cuando se va un voluntario."*
+> *"Las ONGs chicas pierden la coordinación porque ninguna herramienta nueva les sobrevive —lo único que todos usan es WhatsApp. Hornero vive ahí adentro: el agente propone quién debería hacer cada tarea según su carga, el coordinador aprueba con un botón, la persona confirma, y cuando termina, el agente le hace las preguntas justas para armar un balance de impacto con números concretos —no es lo mismo medir una charla que un informe. Así la ONG coordina, supervisa y mide su impacto en el mismo lugar, sin instalar nada, y sin que el conocimiento se vaya cuando se va un voluntario."*
 
 **Track 1 (la pregunta del jurado):** ¿convive con WhatsApp en vez de pedirle al equipo que lo abandone? → **Rotundamente sí: no reemplazamos WhatsApp ni pedimos adoptar nada; vivimos adentro.** Primera frase del pitch.
 

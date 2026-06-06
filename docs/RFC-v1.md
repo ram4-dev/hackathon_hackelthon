@@ -1,6 +1,6 @@
-# RFC · Pulso — Diseño técnico
+# RFC · Hornero — Diseño técnico
 
-> **Estado:** Draft · **Fecha:** 6 de junio de 2026 · **Autores:** equipo Pulso (Backend · ML · Data)
+> **Estado:** Draft · **Fecha:** 6 de junio de 2026 · **Autores:** equipo Hornero (Backend · ML · Data)
 > **Documento de producto (what/why):** ver el PRD `PRD-coordinador-ong-whatsapp.md`
 > Este RFC cubre el **cómo**: arquitectura, acceso a datos, el agente, la integración con WhatsApp y las piezas que más dudas generan.
 
@@ -8,7 +8,7 @@
 
 ## 1. Resumen
 
-Pulso es un agente que vive en WhatsApp y coordina el trabajo de una ONG: registra personas y tareas, propone asignaciones que un coordinador aprueba y la persona confirma, mantiene una memoria de la organización, y al cerrar cada tarea arma un Balance de Impacto.
+Hornero es un agente que vive en WhatsApp y coordina el trabajo de una ONG: registra personas y tareas, propone asignaciones que un coordinador aprueba y la persona confirma, mantiene una memoria de la organización, y al cerrar cada tarea arma un Balance de Impacto.
 
 Técnicamente son cuatro piezas:
 1. Un **webhook** (Vercel) que recibe los mensajes de WhatsApp vía **Kapso**.
@@ -334,7 +334,7 @@ export async function sendList(to: string, body: string, rows: {id:string; title
 ```
 
 ### 7.3 Ventana de 24 horas
-WhatsApp solo permite mensajes libres (no-template) dentro de las **24 h** desde el último mensaje del usuario. Como Pulso es reactivo, casi todo cae adentro. **Los recordatorios proactivos** (cron) que salgan fuera de esa ventana requieren un **template** aprobado. Para el MVP: o se mandan dentro de la ventana, o se deja el recordatorio como nice-to-have.
+WhatsApp solo permite mensajes libres (no-template) dentro de las **24 h** desde el último mensaje del usuario. Como Hornero es reactivo, casi todo cae adentro. **Los recordatorios proactivos** (cron) que salgan fuera de esa ventana requieren un **template** aprobado. Para el MVP: o se mandan dentro de la ventana, o se deja el recordatorio como nice-to-have.
 
 ### 7.4 UI: qué se puede renderizar
 La paleta la fija WhatsApp: **botones (≤3), listas (≤10 filas), media, y Flows.** Botones + listas + texto formateado alcanzan para tablero/approve/cierre **sin bloqueante**. **Flows** (pantallas tipo formulario) requieren **Meta Business Portfolio verificado** (requisito de Meta). Posible atajo: un número pre-verificado provisto por Kapso podría habilitarlos sin trámite propio — **confirmar con Kapso, no apostar la demo**.

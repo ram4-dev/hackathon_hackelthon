@@ -1,4 +1,4 @@
-# SPEC-00 · Contrato compartido y Constitución (Pulso)
+# SPEC-00 · Contrato compartido y Constitución (Hornero)
 
 > **Esto es la fuente de verdad.** Las tres specs de rol (Backend, Data, ML) implementan o consumen lo definido acá. Metodología: *Spec-Driven Development* nivel **spec-anchored** — la spec manda, el código se valida contra los **criterios de aceptación** (que funcionan como *validation gates*). Workflow por spec: **Specify → Plan → Implement → Validate**.
 >
@@ -137,6 +137,7 @@ group by p.id, p.name, p.capacity;
 db.upsertPerson(input: { wa_phone: string; name?: string; role?: string; skills?: string[]; capacity?: Capacity; is_coordinator?: boolean }): Promise<Person>
 db.getPersonByPhone(wa_phone: string): Promise<Person | null>
 db.listCoordinators(): Promise<Person[]>
+db.listPeople(filter?: { active?: boolean }): Promise<Person[]>   // ML: candidatos para scoring (con skills; readPersonLoad no los trae)
 // Tareas
 db.createTask(input: { title: string; description?: string; task_type?: TaskType; priority?: Priority; required_skills?: string[]; effort?: number; deadline?: string; created_by?: string }): Promise<Task>
 db.listTasks(filter?: { status?: TaskStatus; person_id?: string }): Promise<Task[]>
@@ -198,6 +199,9 @@ startImpactFlow(waPhone: string, task_id: string): Promise<void>                
 | `approve:<assignment_id>`       | `coordinatorRespond` (Backend) | `respondToAssignment(id, 'aprobada')` |
 | `reject:<assignment_id>`        | `coordinatorRespond` (Backend) | `respondToAssignment(id, 'rechazada')` |
 | `done:<task_id>`                | tablero / "mis tareas" | `startImpactFlow(waPhone, task_id)` |
+| `cap:baja\|media\|alta`          | onboarding (ML)        | (sin handler) → reenviar a `runAgent` |
+
+> **Botones fuera de esta tabla** (p. ej. `cap:*` del onboarding): `handleButton` no los reconoce y los **reenvía a `runAgent(waPhone, id)`** para que el agente los interprete como texto. Regla: prefijo conocido → acción determinista; prefijo desconocido → al agente.
 
 ---
 

@@ -198,24 +198,330 @@ delete from people where wa_phone = '5491100000000';
 ```
 
 ### SPEC-D.2 — Seed de demo
-**Comportamiento:** poblar datos creíbles para la demo.
+**Comportamiento:** poblar datos creíbles para la demo en Supabase Cloud, después de que SPEC-D.1 haya aplicado el esquema. El seed debe ser idempotente y mínimo: personas, knowledge y 1-2 tareas de ejemplo para que el tablero no arranque vacío.
+
+**Precondición:** SPEC-D.1 aplicado y validado en el proyecto Supabase Cloud.
+
+**MCP target:**
+- Servidor: `https://mcp.supabase.com/mcp?project_ref=tjpfstdhxsgwyejlosfq`
+- Features necesarias: `database`.
+- No usar `read_only=true` para esta spec, porque hay que insertar seed.
+
+**Delegación a Antigravity:** Codex no puede conectarse al MCP de Supabase desde esta sesión. Antigravity queda como agente ejecutor de SPEC-D.2 en Supabase Cloud.
+
+Tasks para Antigravity:
+- [ ] Confirmar que SPEC-D.1 ya existe en el proyecto `tjpfstdhxsgwyejlosfq`.
+- [ ] Aplicar el seed `002_spec_d2_demo_seed` con el SQL de esta sección.
+- [ ] Verificar que hay 4 personas activas y al menos 1 coordinador activo.
+- [ ] Verificar que hay 5 filas de `knowledge` con `source='demo_seed_spec_d2'`.
+- [ ] Verificar que hay 2 tareas demo creadas por la coordinadora seed.
+- [ ] Verificar que hay 1 assignment `propuesta` para alimentar `getBoard.pending_approval`.
+- [ ] Ejecutar las queries de validación y registrar evidencia en `docs/spec-d2-results.md`.
+
+Guardrails para Antigravity:
+- No tocar filas que no sean del demo seed.
+- No cambiar el esquema: D.2 solo inserta datos.
+- No implementar `db.*` todavía.
+- No usar datos personales reales: teléfonos y nombres son ficticios para demo.
+- Si el proyecto ya tiene seed del equipo, coordinar antes de borrar/resembrar filas demo.
+
+**Seed requerido:** aplicar una migración/seed idempotente. Nombre sugerido: `002_spec_d2_demo_seed`.
+
+```sql
+begin;
+
+delete from tasks t
+using people p
+where t.created_by = p.id
+  and p.wa_phone = '5491100000001'
+  and t.title in (
+    'Preparar informe para donantes',
+    'Organizar charla de derechos digitales'
+  );
+
+delete from knowledge
+where source = 'demo_seed_spec_d2';
+
+insert into people (wa_phone, name, role, skills, capacity, is_coordinator, timezone, active)
+values
+  ('5491100000001', 'Lucia Coordinadora', 'Coordinacion general', array['coordinacion','gestion','donantes'], 'alta', true, 'America/Argentina/Buenos_Aires', true),
+  ('5491100000002', 'Ana Voluntaria', 'Comunicacion', array['redaccion','difusion','datos'], 'media', false, 'America/Argentina/Buenos_Aires', true),
+  ('5491100000003', 'Bruno Tallerista', 'Formacion', array['facilitacion','comunidad','charlas'], 'baja', false, 'America/Argentina/Buenos_Aires', true),
+  ('5491100000004', 'Carla Operaciones', 'Atencion territorial', array['logistica','atencion','relevamiento'], 'alta', false, 'America/Argentina/Buenos_Aires', true)
+on conflict (wa_phone) do update
+set name = excluded.name,
+    role = excluded.role,
+    skills = excluded.skills,
+    capacity = excluded.capacity,
+    is_coordinator = excluded.is_coordinator,
+    timezone = excluded.timezone,
+    active = excluded.active;
+
+insert into knowledge (content, kind, tags, source)
+values
+  ('La ONG prioriza acciones de educacion, acompanamiento territorial y rendicion transparente a donantes.', 'hecho', array['ong','prioridades'], 'demo_seed_spec_d2'),
+  ('Toda tarea que impacta a beneficiarios debe cerrarse con un balance de impacto cuantificado.', 'politica', array['impacto','cierre'], 'demo_seed_spec_d2'),
+  ('Los informes para donantes deben incluir alcance, resultados concretos y proximo paso recomendado.', 'proceso', array['donantes','informes'], 'demo_seed_spec_d2'),
+  ('Las charlas comunitarias se coordinan con al menos 72 horas de anticipacion y un responsable de materiales.', 'proceso', array['charlas','logistica'], 'demo_seed_spec_d2'),
+  ('El equipo usa WhatsApp como canal operativo principal; las decisiones importantes quedan registradas por el agente.', 'hecho', array['whatsapp','operacion'], 'demo_seed_spec_d2');
+
+with coord as (
+  select id from people where wa_phone = '5491100000001'
+),
+ana as (
+  select id from people where wa_phone = '5491100000002'
+),
+created_tasks as (
+  insert into tasks (title, description, task_type, priority, required_skills, effort, deadline, status, created_by)
+  select 'Preparar informe para donantes',
+         'Armar un resumen de resultados del mes con datos de actividades y aprendizajes.',
+         'informe',
+         'alta',
+         array['redaccion','datos'],
+         3,
+         now() + interval '2 hours',
+         'pendiente',
+         coord.id
+  from coord
+  union all
+  select 'Organizar charla de derechos digitales',
+         'Coordinar una charla comunitaria introductoria y preparar materiales de apoyo.',
+         'charla',
+         'media',
+         array['facilitacion','comunidad'],
+         2,
+         now() + interval '3 days',
+         'propuesta',
+         coord.id
+  from coord
+  returning id, title
+)
+insert into assignments (task_id, person_id, status, reason)
+select created_tasks.id,
+       ana.id,
+       'propuesta',
+       'Seed demo: Ana tiene skills de comunicacion y carga media para validar pending_approval.'
+from created_tasks, ana
+where created_tasks.title = 'Organizar charla de derechos digitales';
+
+commit;
+```
+
+**Notas de alcance:**
+- Este seed usa `source='demo_seed_spec_d2'` para poder distinguir knowledge demo.
+- Las personas se upsertean por `wa_phone`, que ya es unique en SPEC-D.1.
+- Las tareas demo se borran y recrean en cada corrida para mantener deadlines relativos (`now()+2h` y `now()+3d`).
+- La assignment `propuesta` es intencional para que `getBoard.pending_approval` tenga datos apenas D.4 exista.
+
 **Criterios de aceptación:**
 - [ ] 3-4 personas con `skills` y `capacity` variados; **al menos 1 con `is_coordinator = true`**.
 - [ ] 3-5 filas en `knowledge` (procesos/hechos de una ONG ficticia).
 - [ ] Opcional: 1-2 tareas en estados distintos para que `getBoard` no venga vacío.
-**Validación:** `db.getBoard()` y `db.listCoordinators()` devuelven datos no vacíos.
+- [ ] 1 assignment `propuesta` para validar el pending approval del tablero.
+
+**Validación:** ejecutar estas queries en Supabase Cloud y registrar resultados.
+
+```sql
+select count(*) as active_people
+from people
+where active = true
+  and wa_phone in ('5491100000001','5491100000002','5491100000003','5491100000004');
+
+select count(*) as active_coordinators
+from people
+where active = true
+  and is_coordinator = true
+  and wa_phone in ('5491100000001','5491100000002','5491100000003','5491100000004');
+
+select count(*) as demo_knowledge
+from knowledge
+where source = 'demo_seed_spec_d2';
+
+select t.status, count(*) as tasks
+from tasks
+join people p on p.id = t.created_by
+where p.wa_phone = '5491100000001'
+  and t.title in ('Preparar informe para donantes', 'Organizar charla de derechos digitales')
+group by t.status
+order by t.status;
+
+select count(*) as pending_approval
+from assignments a
+join tasks t on t.id = a.task_id
+join people creator on creator.id = t.created_by
+join people candidate on candidate.id = a.person_id
+where a.status = 'propuesta'
+  and creator.wa_phone = '5491100000001'
+  and candidate.wa_phone = '5491100000002'
+  and t.title = 'Organizar charla de derechos digitales';
+```
+
+Resultados esperados:
+- `active_people = 4`
+- `active_coordinators >= 1`
+- `demo_knowledge = 5`
+- tareas: 1 `pendiente`, 1 `propuesta`
+- `pending_approval = 1`
 
 ### SPEC-D.3 — Personas
 **Funciones:** `db.upsertPerson`, `db.getPersonByPhone`, `db.listCoordinators`.
+
+**Comportamiento:** implementar las funciones de personas de SPEC-00 §4.1 contra Supabase Cloud usando `supabase-js` server-side. Esta spec empieza la capa `db.*` real; no cambia el esquema.
+
+**Precondición:** SPEC-D.1 aplicado. SPEC-D.2 no es bloqueante para implementar D.3, pero sus datos sirven para validar `listCoordinators`.
+
+**Contrato de funciones:**
+
+```ts
+db.upsertPerson(input: {
+  wa_phone: string
+  name?: string
+  role?: string
+  skills?: string[]
+  capacity?: Capacity
+  is_coordinator?: boolean
+}): Promise<Person>
+
+db.getPersonByPhone(wa_phone: string): Promise<Person | null>
+
+db.listCoordinators(): Promise<Person[]>
+```
+
+**Reglas de implementación:**
+- `upsertPerson` usa `wa_phone` como clave natural (`people.wa_phone unique`).
+- Insert:
+  - `wa_phone` requerido.
+  - `name` en SPEC-00 es opcional, pero `people.name` es `not null`; si falta, insertar `name = wa_phone` como placeholder determinista.
+  - defaults: `capacity='media'`, `is_coordinator=false`, `skills=[]`, `active=true`, `timezone='America/Argentina/Buenos_Aires'`.
+- Update:
+  - no duplica fila.
+  - mergea solo campos presentes en `input`.
+  - si `name` falta, conserva el nombre existente.
+  - si `skills` falta, conserva skills existentes; si viene `[]`, actualiza a arreglo vacío.
+  - si `is_coordinator` falta, conserva valor existente; si viene `false`, actualiza a false.
+- `getPersonByPhone`:
+  - busca por `wa_phone`.
+  - devuelve `null` si Supabase responde 0 filas (`maybeSingle`/equivalente), no tira error.
+- `listCoordinators`:
+  - filtra `is_coordinator = true` y `active = true`.
+  - orden sugerido: `created_at asc`.
+- Todas las funciones devuelven el shape `Person` de SPEC-00, con timestamps serializados como string ISO por Supabase.
+
+**Delegación a Antigravity/Codex executor:** D.3 se puede implementar cuando D.2 termine o en paralelo si el executor tiene acceso a repo + env local. Codex en esta sesión prepara la spec y el artifact; el executor que tenga credenciales Supabase debe completar la validación live.
+
+Tasks para executor:
+- [ ] Agregar dependencia runtime `@supabase/supabase-js` si todavía no existe.
+- [ ] Crear el cliente server-side con `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`.
+- [ ] Exportar las tres funciones D.3 desde el módulo `db.*` acordado por el equipo.
+- [ ] Agregar tipos `Person`, `Capacity` compatibles con SPEC-00 si todavía no existen.
+- [ ] Agregar tests unitarios con Supabase mock/stub para insert, update, null y coordinadores.
+- [ ] Ejecutar validación live contra Supabase Cloud cuando haya credenciales.
+
 **Criterios de aceptación:**
 - [ ] `upsertPerson` inserta si el `wa_phone` no existe y **actualiza** si existe (no duplica).
 - [ ] Defaults aplicados: `capacity='media'`, `is_coordinator=false`, `skills=[]`, `active=true`, `timezone` AR.
 - [ ] `getPersonByPhone` devuelve `null` (no error) si no existe.
 - [ ] `listCoordinators` solo trae `is_coordinator=true` y `active=true`.
-**Validación:** test: upsert dos veces el mismo `wa_phone` → 1 sola fila, datos mergeados.
+
+**Validación unitaria mínima:**
+- `upsertPerson({ wa_phone })` crea 1 fila con defaults y `name = wa_phone`.
+- `upsertPerson({ wa_phone, name:'A', skills:['datos'], is_coordinator:true })` y luego `upsertPerson({ wa_phone, role:'Ops', skills:[] })` deja 1 sola fila, conserva `name='A'`, actualiza `role='Ops'`, actualiza `skills=[]`, conserva `is_coordinator=true`.
+- `getPersonByPhone('no-existe')` devuelve `null`.
+- `listCoordinators()` no devuelve personas inactivas ni no coordinadoras.
+
+**Validación live SQL opcional:** si el executor valida directo en Supabase, usar un teléfono reservado y limpiar al final.
+
+```sql
+delete from people where wa_phone = '5491100000099';
+
+insert into people (wa_phone, name)
+values ('5491100000099', '5491100000099')
+on conflict (wa_phone) do update
+set name = excluded.name
+returning wa_phone, name, capacity, is_coordinator, skills, active, timezone;
+
+update people
+set name = 'Persona D3',
+    role = 'Ops',
+    skills = '{}',
+    is_coordinator = true
+where wa_phone = '5491100000099'
+returning wa_phone, name, role, skills, is_coordinator;
+
+select count(*) as rows_for_phone
+from people
+where wa_phone = '5491100000099';
+
+select wa_phone, name
+from people
+where is_coordinator = true and active = true
+order by created_at asc;
+
+delete from people where wa_phone = '5491100000099';
+```
 
 ### SPEC-D.4 — Tareas + tablero
 **Funciones:** `db.createTask`, `db.listTasks`, `db.setTaskStatus`, `db.getBoard`.
+
+**Comportamiento:** implementar funciones de tareas y tablero de SPEC-00 §4.1 contra Supabase Cloud usando `supabase-js` server-side. Esta spec no cambia el esquema; compone datos de `tasks`, `assignments` e `impact_reports`.
+
+**Precondición:** SPEC-D.1 aplicado. SPEC-D.3 recomendado porque comparte cliente/types. SPEC-D.2 ayuda a validar tablero no vacío, pero no debe ser requisito para tests unitarios.
+
+**Contrato de funciones:**
+
+```ts
+db.createTask(input: {
+  title: string
+  description?: string
+  task_type?: TaskType
+  priority?: Priority
+  required_skills?: string[]
+  effort?: number
+  deadline?: string
+  created_by?: string
+}): Promise<Task>
+
+db.listTasks(filter?: { status?: TaskStatus; person_id?: string }): Promise<Task[]>
+
+db.setTaskStatus(task_id: string, status: TaskStatus): Promise<Task>
+
+db.getBoard(): Promise<Board>
+```
+
+**Reglas de implementación:**
+- Validar `TaskStatus`: `'pendiente' | 'propuesta' | 'aprobada' | 'en_curso' | 'hecha' | 'bloqueada'`.
+- Validar `Priority`: `'baja' | 'media' | 'alta'`.
+- Validar `TaskType`: `'charla' | 'informe' | 'difusion' | 'atencion' | 'gestion' | 'recaudacion' | 'otro'`.
+- `createTask`:
+  - requiere `title`.
+  - defaults: `priority='media'`, `effort=1`, `status='pendiente'`, `required_skills=[]`.
+  - acepta `deadline` como ISO string y lo persiste en `deadline`.
+  - devuelve la fila insertada con shape `Task`.
+- `listTasks`:
+  - sin filtro: devuelve todas las tareas, orden sugerido `created_at desc`.
+  - `filter.status`: filtra `tasks.status`.
+  - `filter.person_id`: devuelve tareas con una assignment `aprobada` para esa persona; propuestas quedan fuera de "mis tareas".
+  - si vienen ambos filtros, aplica ambos.
+- `setTaskStatus`:
+  - rechaza status fuera de `TaskStatus` antes de llamar Supabase.
+  - actualiza `tasks.status` y devuelve la fila actualizada.
+  - si `task_id` no existe, debe tirar error explícito.
+- `getBoard`:
+  - `columns`: objeto con todas las claves de `TaskStatus`, incluso si el arreglo está vacío.
+  - `pending_approval`: assignments con `status='propuesta'`, orden sugerido `proposed_at asc`.
+  - `alerts`: tareas con `deadline < now + 24h` y `status != 'hecha'`, ordenadas por `deadline asc`.
+  - `recent_impact`: últimos 5 `impact_reports`, solo `{ headline, created_at }`, orden `created_at desc`.
+  - no muta datos.
+
+**Delegación a Antigravity/Codex executor:** D.4 debe implementarse después de D.3 o reutilizando su cliente/types. Codex en esta sesión prepara la spec y el artifact; el executor con repo/env completa implementación y validación.
+
+Tasks para executor:
+- [ ] Reutilizar el cliente Supabase server-side de D.3.
+- [ ] Agregar/ajustar tipos `Task`, `TaskStatus`, `Priority`, `TaskType`, `Assignment`, `Board` compatibles con SPEC-00.
+- [ ] Implementar `createTask`, `listTasks`, `setTaskStatus`, `getBoard`.
+- [ ] Agregar tests unitarios con Supabase mock/stub para defaults, filtros, columnas, alertas, impacto reciente y validación de status.
+- [ ] Ejecutar validación live contra Supabase Cloud cuando haya credenciales.
+
 **Criterios de aceptación:**
 - [ ] `createTask` aplica defaults (`priority='media'`, `effort=1`, `status='pendiente'`, `required_skills=[]`).
 - [ ] `getBoard.columns` agrupa tareas por `status` (todas las claves de `TaskStatus`, aunque estén vacías).
@@ -223,7 +529,88 @@ delete from people where wa_phone = '5491100000000';
 - [ ] `getBoard.recent_impact` = últimos 5 `impact_reports` (headline + fecha), desc.
 - [ ] `getBoard.pending_approval` = assignments en `'propuesta'`.
 - [ ] `setTaskStatus` valida que el status sea un `TaskStatus`.
-**Validación:** seed con una tarea `deadline = now()+2h` → aparece en `alerts`; con `deadline = now()+3d` → no.
+
+**Validación unitaria mínima:**
+- `createTask({ title:'x' })` aplica defaults.
+- `listTasks({ status:'pendiente' })` devuelve solo pendientes.
+- `listTasks({ person_id })` devuelve solo tareas con assignment `aprobada` de esa persona.
+- `setTaskStatus(task_id,'en_curso')` persiste y devuelve la tarea.
+- `setTaskStatus(task_id,'invalid' as TaskStatus)` falla antes de Supabase.
+- `getBoard().columns` contiene exactamente las 6 claves de `TaskStatus`.
+- Una tarea `deadline = now()+2h`, `status='pendiente'` aparece en `alerts`.
+- Una tarea `deadline = now()+3d`, `status='pendiente'` no aparece en `alerts`.
+- Una tarea `deadline = now()+2h`, `status='hecha'` no aparece en `alerts`.
+- `recent_impact` trae máximo 5, orden desc.
+- `pending_approval` trae solo assignments `propuesta`.
+
+**Validación live SQL opcional:** si el executor valida directo en Supabase, usar títulos reservados y limpiar al final.
+
+```sql
+with coord as (
+  select id from people where wa_phone = '5491100000001'
+),
+person as (
+  select id from people where wa_phone = '5491100000002'
+),
+cleanup_assignments as (
+  delete from assignments a
+  using tasks t
+  where a.task_id = t.id
+    and t.title in ('Smoke D4 alerta', 'Smoke D4 futura', 'Smoke D4 hecha')
+  returning a.id
+),
+cleanup_tasks as (
+  delete from tasks
+  where title in ('Smoke D4 alerta', 'Smoke D4 futura', 'Smoke D4 hecha')
+  returning id
+),
+created as (
+  insert into tasks (title, effort, deadline, status, created_by)
+  select 'Smoke D4 alerta', 1, now() + interval '2 hours', 'pendiente', coord.id from coord
+  union all
+  select 'Smoke D4 futura', 1, now() + interval '3 days', 'pendiente', coord.id from coord
+  union all
+  select 'Smoke D4 hecha', 1, now() + interval '2 hours', 'hecha', coord.id from coord
+  returning id, title, status, deadline
+),
+approved_assignment as (
+  insert into assignments (task_id, person_id, status, reason)
+  select created.id, person.id, 'aprobada', 'Smoke D4 approved assignment'
+  from created, person
+  where created.title = 'Smoke D4 alerta'
+  returning id
+),
+pending_assignment as (
+  insert into assignments (task_id, person_id, status, reason)
+  select created.id, person.id, 'propuesta', 'Smoke D4 pending assignment'
+  from created, person
+  where created.title = 'Smoke D4 futura'
+  returning id
+)
+select title, status, deadline
+from created
+order by title;
+
+select t.title
+from tasks t
+where t.deadline < now() + interval '24 hours'
+  and t.status != 'hecha'
+  and t.title like 'Smoke D4%'
+order by t.deadline asc;
+
+select a.status, count(*) as assignments
+from assignments a
+join tasks t on t.id = a.task_id
+where t.title like 'Smoke D4%'
+group by a.status
+order by a.status;
+
+delete from assignments
+where task_id in (select id from tasks where title like 'Smoke D4%');
+
+delete from tasks
+where title like 'Smoke D4%';
+```
 
 ### SPEC-D.5 — Asignaciones (persistencia de la doble aprobación)
 **Funciones:** `db.insertAssignment`, `db.getAssignment`, `db.setAssignmentStatus`, `db.readPersonLoad`.
@@ -280,3 +667,11 @@ delete from people where wa_phone = '5491100000000';
 - [ ] Esquema + vista + seed aplicados en el proyecto Supabase del equipo.
 - [ ] Un script `scripts/smoke.ts` corre las funciones clave y pasa.
 - [ ] Los shapes de retorno coinciden 1:1 con SPEC-00 (Backend y ML pueden reemplazar el mock por `db` sin tocar su código).
+
+---
+
+> **Nota de integración (Hornero):** `db.listPeople(filter?: { active? })` (SPEC-00 §4.1, que
+> `scoreCandidates` necesita) y el filtro `task_type` de `getOrgImpact` se proveen en el
+> adaptador de integración `lib/db.ts`, que envuelve esta capa Supabase y la expone como la
+> interfaz `Db` del contrato (tipos de `types.ts`). Si esta capa agrega `listPeople`
+> nativamente, el adaptador lo usa directo.
