@@ -85,8 +85,8 @@ Comandos:
 Cualquier otra cosa se manda al agente como texto.`);
 }
 
-/** Procesa una línea. Devuelve false para terminar el loop. */
-async function dispatch(line: string): Promise<boolean> {
+/** Procesa una línea. Devuelve false para terminar el loop. (Reusado por scripts/demo.ts.) */
+export async function dispatch(line: string): Promise<boolean> {
 	if (line === "/exit") return false;
 	if (line === "/help") {
 		help();
@@ -145,7 +145,10 @@ async function main(): Promise<void> {
 	}
 }
 
-main().catch((e) => {
-	console.error(e);
-	process.exit(1);
-});
+// Solo arranca el REPL si se ejecuta directamente (no al importarlo desde demo.ts).
+if (process.argv[1]?.endsWith("chat.ts") || process.argv[1]?.endsWith("chat.js")) {
+	main().catch((e) => {
+		console.error(e);
+		process.exit(1);
+	});
+}
