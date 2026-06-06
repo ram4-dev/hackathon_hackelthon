@@ -208,7 +208,8 @@ export async function inferImpactQuestions(
 			`Clasificá el tipo de tarea y generá entre 2 y 4 preguntas CUANTIFICABLES, a medida de ese tipo, ` +
 			`para capturar el impacto. Una métrica por pregunta, en español rioplatense, cortas y concretas. ` +
 			`No es un formulario fijo: adaptalas al caso. Guía por tipo (prior, no copiar literal):\n${priors}\n\n` +
-			`Importante: las preguntas deben poder responderse con un número o un dato concreto.`,
+			`Importante: las preguntas deben poder responderse con un número o un dato concreto. ` +
+			`Devolvé el resultado en formato JSON con los campos task_type y questions.`,
 	});
 
 	// Dedup (preguntas idénticas colisionarían como claves de raw_answers) + tope 4.
@@ -256,7 +257,8 @@ export async function recordImpactReport(
 				`- outputs: resultados con números duros (alcanzados, unidades, entregables).\n` +
 				`- outcome: qué cambió (texto corto).\n- headline: la cifra que cuenta (ej "120 familias recibieron un kit").\n\n` +
 				`REGLA ABSOLUTA: no estimes, no calcules, no inventes números. Cada número debe aparecer textualmente ` +
-				`en las respuestas. Si un dato no está, no lo incluyas.`,
+				`en las respuestas. Si un dato no está, no lo incluyas. ` +
+				`Devolvé el balance en formato JSON (inputs, outputs, outcome, headline).`,
 		});
 		draft = object;
 	} catch {

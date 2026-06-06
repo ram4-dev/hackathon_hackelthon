@@ -114,7 +114,7 @@ export async function inferKnowledge(
 				`KB actual:\n${existingList}\n\nConversación:\n${conversationText}\n\n` +
 				`Para cada hecho: content (frase clara y autocontenida), kind, tags, y duplicate_of = el id ` +
 				`de un KB existente que ya dice lo mismo (aunque con otras palabras), o "" si es realmente nuevo. ` +
-				`No dupliques conocimiento ya presente.`,
+				`No dupliques conocimiento ya presente. Devolvé los hechos en formato JSON.`,
 		});
 		facts = object.facts;
 	} catch {
