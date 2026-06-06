@@ -6,70 +6,51 @@
 
 ## 1. Current Result
 
-Codex prepared SPEC-D.4 as an implementation-ready handoff.
+SPEC-D.4 implemented and validated locally.
 
-Completed locally:
-- [x] `docs/spec-data-engineer.md` now defines D.4 behavior for:
-  - `db.createTask`
-  - `db.listTasks`
-  - `db.setTaskStatus`
-  - `db.getBoard`
-- [x] The spec defines defaults, validation rules, list filters, and board composition.
-- [x] The spec defines the `listTasks({ person_id })` ambiguity as accepted assignments only: `assignments.status='aprobada'`.
-- [x] The spec includes minimum unit validation and optional live SQL validation.
-
-Not completed by Codex:
-- [ ] Runtime `db.*` implementation.
-- [ ] Unit tests.
-- [ ] Live Supabase validation.
-
-Reason: Antigravity is being assigned D.3 implementation homework first; D.4 is prepared as the next task.
+Completed:
+- [x] `TaskStatus`, `Priority`, `TaskType`, `SpecTask`, `Assignment`, `Board`, `ImpactReportSummary` types added to `src/domain/types.ts`.
+- [x] `db.createTask` — inserts with defaults (`priority='media'`, `effort=1`, `status='pendiente'`, `required_skills=[]`), validates `Priority` and `TaskType`.
+- [x] `db.listTasks` — no filter returns all (desc), `status` filter, `person_id` filter (approved assignments only via inner join).
+- [x] `db.setTaskStatus` — validates `TaskStatus` before calling Supabase; rejects invalid values.
+- [x] `db.getBoard` — all 6 `TaskStatus` columns always present, `pending_approval` (propuesta), `alerts` (deadline < 24h, status != hecha), `recent_impact` (max 5, desc).
+- [x] Unit tests written and passing (9 new D.4 tests, 33 total).
+- [ ] Live Supabase validation (requires credentials — Antigravity executes).
 
 ---
 
 ## 2. Antigravity Homework
 
-Antigravity should execute D.4 after D.3 is implemented and pushed.
+Antigravity executes live validation after D.3 is confirmed in Supabase Cloud.
 
 Homework checklist:
 - [ ] Pull latest `data-engineer`.
-- [ ] Stay on branch `data-engineer`; do not work on `main`.
-- [ ] Confirm D.3 people functions and Supabase client exist.
-- [ ] Implement only D.4 task/board functions.
-- [ ] Keep write scope narrow:
-  - SPEC-00-compatible data types
-  - existing server-side Supabase client module
-  - existing `db.*` module
-  - focused D.4 tests
-  - this results artifact
-- [ ] Add validation for `TaskStatus`, `Priority`, and `TaskType`.
-- [ ] Validate unit tests locally.
-- [ ] Run optional live validation against project `tjpfstdhxsgwyejlosfq`.
+- [ ] Stay on branch `data-engineer`.
+- [ ] Confirm D.3 people functions and Supabase client work.
+- [ ] Run optional live SQL validation (section 4 of `spec-data-engineer.md`, SPEC-D.4 block).
+- [ ] Clean up smoke tasks after validation.
 - [ ] Fill section 5 with evidence.
 - [ ] Commit and push to `origin/data-engineer`.
 
 Do not:
-- [ ] Do not change schema.
-- [ ] Do not implement D.5 assignment transitions in the D.4 commit.
-- [ ] Do not change D.3 behavior while implementing D.4 unless a test exposes a direct integration bug.
+- Do not change the schema.
+- Do not implement D.5 assignment transitions in the D.4 commit.
 
 ---
 
 ## 3. Acceptance Gates
 
-SPEC-D.4 is done only when all gates pass.
-
 | Gate | Expected result | Status |
 |---|---|---|
-| `createTask` defaults | `priority='media'`, `effort=1`, `status='pendiente'`, `required_skills=[]` | Pending implementation |
-| `listTasks(status)` | only matching status | Pending implementation |
-| `listTasks(person_id)` | only tasks with approved assignment for person | Pending implementation |
-| `setTaskStatus` valid status | updates and returns task | Pending implementation |
-| `setTaskStatus` invalid status | rejects before Supabase call | Pending implementation |
-| Board columns | all 6 `TaskStatus` keys exist | Pending implementation |
-| Board alerts | deadline < 24h and status != `hecha` | Pending implementation |
-| Board recent impact | max 5, newest first | Pending implementation |
-| Board pending approval | only `assignments.status='propuesta'` | Pending implementation |
+| `createTask` defaults | `priority='media'`, `effort=1`, `status='pendiente'`, `required_skills=[]` | **PASS** (unit test) |
+| `listTasks(status)` | only matching status | **PASS** (unit test) |
+| `listTasks(person_id)` | only tasks with approved assignment for person | **PASS** (unit test) |
+| `setTaskStatus` valid status | updates and returns task | **PASS** (unit test) |
+| `setTaskStatus` invalid status | rejects before Supabase call | **PASS** (unit test) |
+| Board columns | all 6 `TaskStatus` keys exist | **PASS** (unit test) |
+| Board alerts | deadline < 24h and status != `hecha` | **PASS** (unit test) |
+| Board recent impact | max 5, newest first | **PASS** (unit test) |
+| Board pending approval | only `assignments.status='propuesta'` | **PASS** (unit test) |
 
 ---
 
@@ -85,25 +66,29 @@ SPEC-D.4 is done only when all gates pass.
 
 ## 5. Execution Evidence
 
-Fill this after implementation and validation.
-
 | Field | Value |
 |---|---|
-| Implementation commit | TBD |
-| `db.*` module path | TBD |
-| Unit tests command | TBD |
-| Unit tests result | TBD |
-| Live Supabase validation | TBD |
-| Executor | TBD |
+| Implementation commit | TBD (pending push) |
+| `db.*` module path | `src/lib/db.ts` |
+| Types path | `src/domain/types.ts` |
+| Unit tests command | `npm test` |
+| Unit tests result | 33 passed (9 D.4 tests) |
+| Live Supabase validation | Pending — Antigravity |
+| Executor | Claude Code / data-engineer branch |
 
 Validation output:
 
 ```text
-TBD
+ RUN  v4.1.8
+
+ Test Files  10 passed (10)
+      Tests  33 passed (33)
+   Start at  16:08:08
+   Duration  511ms
 ```
 
 Final status:
 
 ```text
-Pending implementation.
+Unit implementation complete. Live validation delegated to Antigravity (requires SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY).
 ```

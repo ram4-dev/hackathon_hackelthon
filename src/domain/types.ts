@@ -104,3 +104,61 @@ export interface Person {
 	created_at: string;
 }
 
+export type TaskStatus =
+	| "pendiente"
+	| "propuesta"
+	| "aprobada"
+	| "en_curso"
+	| "hecha"
+	| "bloqueada";
+
+export type Priority = "baja" | "media" | "alta";
+
+export type TaskType =
+	| "charla"
+	| "informe"
+	| "difusion"
+	| "atencion"
+	| "gestion"
+	| "recaudacion"
+	| "otro";
+
+export interface SpecTask {
+	id: string;
+	title: string;
+	description?: string;
+	task_type?: TaskType;
+	priority: Priority;
+	required_skills: string[];
+	effort: number;
+	deadline?: string;
+	status: TaskStatus;
+	created_by?: string;
+	created_at: string;
+}
+
+export interface Assignment {
+	id: string;
+	task_id: string;
+	person_id: string;
+	status: string;
+	reason?: string;
+	coord_id?: string;
+	coord_decision_at?: string;
+	rejected_by?: string;
+	proposed_at: string;
+	responded_at?: string;
+}
+
+export interface ImpactReportSummary {
+	headline?: string;
+	created_at: string;
+}
+
+export interface Board {
+	columns: Record<TaskStatus, SpecTask[]>;
+	pending_approval: Assignment[];
+	alerts: SpecTask[];
+	recent_impact: ImpactReportSummary[];
+}
+
