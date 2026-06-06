@@ -395,21 +395,22 @@ score(person, task) =
 
 ---
 
-## 11. Decisiones clave a pulir juntos
+## 11. Decisiones clave (Q&A)
 
 **a) ¿Buckets / KV / relacional?** → **Relacional (Postgres).** Supabase *es* Postgres y los datos necesitan joins (carga, impacto, doble aprobación). Buckets = archivos (no aplica); no hay KV nativo. 5 tablas + 1 vista, minutos.
+RTA: Un bucket de formato LLM WIKI con un index.md
+https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
 
 **b) ¿MCP de Supabase en runtime?** → **No. MCP para dev-time; `supabase-js` para runtime.** El MCP que te cree esquema + vista + seed en Claude Code; el agente le pega con `supabase-js` directo. *MCP = andamiaje; `supabase-js` = músculo.*
 
 **c) ¿"Tablero / UI dentro de WhatsApp"?** → **Mensajes interactivos, no Flows** (Flows piden verificación de Meta → bloqueante). Tablero = texto + lista; approve/done/coordinador = botones.
 
-**d) Onboarding** → `nombre` · `área/rol` · `2-3 skills` · `disponibilidad` (botones) + flag coordinador (seedeado). Más liviano aún: solo `nombre + skills` e inferir el resto.
+**d) Onboarding** → `nombre` · `área/rol` · `2-3 skills` · `disponibilidad` (botones) + flag coordinador (seedeado). Preguntas flexibles.
 
 **e) Agregación del impacto** → métricas **heterogéneas** no se suman. **MVP:** feed de titulares + conteo por tipo (`getOrgImpact`). La agregación cross-métrica "real" es post-MVP.
 
 **f) Doble aprobación — el orden y cuándo aplica:**
    - **Orden (default elegido):** agente propone → **coordinador aprueba/reasigna** (decide *quién*) → **persona confirma** (decide *si puede*). Razón: el coordinador controla la distribución (necesidad de la dirección) y la persona conserva autonomía, sin que nadie se comprometa a algo que después se veta.
-   - *Alternativa:* persona acepta primero → coordinador da el ok final. Más natural si la persona se autopropone, pero arriesga vetar algo ya comprometido. (No recomendado para el MVP.)
    - **¿Cuándo se exige la aprobación del coordinador?** Configurable. MVP: **siempre** (muestra la gobernanza). En producción se puede limitar a tareas de alta prioridad/esfuerzo, o **solo a ciertas personas** (p. ej. voluntarios nuevos) — ése es el caso "a *x* personas".
    - **¿Quién es el coordinador?** MVP: uno seedeado (o varios; el primero que responde decide). Multi-coordinador con ruteo fino = post-MVP.
 
