@@ -462,6 +462,66 @@ delete from people where wa_phone = '5491100000099';
 
 ### SPEC-D.4 — Tareas + tablero
 **Funciones:** `db.createTask`, `db.listTasks`, `db.setTaskStatus`, `db.getBoard`.
+
+**Comportamiento:** implementar funciones de tareas y tablero de SPEC-00 §4.1 contra Supabase Cloud usando `supabase-js` server-side. Esta spec no cambia el esquema; compone datos de `tasks`, `assignments` e `impact_reports`.
+
+**Precondición:** SPEC-D.1 aplicado. SPEC-D.3 recomendado porque comparte cliente/types. SPEC-D.2 ayuda a validar tablero no vacío, pero no debe ser requisito para tests unitarios.
+
+**Contrato de funciones:**
+
+```ts
+db.createTask(input: {
+  title: string
+  description?: string
+  task_type?: TaskType
+  priority?: Priority
+  required_skills?: string[]
+  effort?: number
+  deadline?: string
+  created_by?: string
+}): Promise<Task>
+
+db.listTasks(filter?: { status?: TaskStatus; person_id?: string }): Promise<Task[]>
+
+db.setTaskStatus(task_id: string, status: TaskStatus): Promise<Task>
+
+db.getBoard(): Promise<Board>
+```
+
+**Reglas de implementación:**
+- Validar `TaskStatus`: `'pendiente' | 'propuesta' | 'aprobada' | 'en_curso' | 'hecha' | 'bloqueada'`.
+- Validar `Priority`: `'baja' | 'media' | 'alta'`.
+- Validar `TaskType`: `'charla' | 'informe' | 'difusion' | 'atencion' | 'gestion' | 'recaudacion' | 'otro'`.
+- `createTask`:
+  - requiere `title`.
+  - defaults: `priority='media'`, `effort=1`, `status='pendiente'`, `required_skills=[]`.
+  - acepta `deadline` como ISO string y lo persiste en `deadline`.
+  - devuelve la fila insertada con shape `Task`.
+- `listTasks`:
+  - sin filtro: devuelve todas las tareas, orden sugerido `created_at desc`.
+  - `filter.status`: filtra `tasks.status`.
+  - `filter.person_id`: devuelve tareas con una assignment `aprobada` para esa persona; propuestas quedan fuera de "mis tareas".
+  - si vienen ambos filtros, aplica ambos.
+- `setTaskStatus`:
+  - rechaza status fuera de `TaskStatus` antes de llamar Supabase.
+  - actualiza `tasks.status` y devuelve la fila actualizada.
+  - si `task_id` no existe, debe tirar error explícito.
+- `getBoard`:
+  - `columns`: objeto con todas las claves de `TaskStatus`, incluso si el arreglo está vacío.
+  - `pending_approval`: assignments con `status='propuesta'`, orden sugerido `proposed_at asc`.
+  - `alerts`: tareas con `deadline < now + 24h` y `status != 'hecha'`, ordenadas por `deadline asc`.
+  - `recent_impact`: últimos 5 `impact_reports`, solo `{ headline, created_at }`, orden `created_at desc`.
+  - no muta datos.
+
+**Delegación a Antigravity/Codex executor:** D.4 debe implementarse después de D.3 o reutilizando su cliente/types. Codex en esta sesión prepara la spec y el artifact; el executor con repo/env completa implementación y validación.
+
+Tasks para executor:
+- [ ] Reutilizar el cliente Supabase server-side de D.3.
+- [ ] Agregar/ajustar tipos `Task`, `TaskStatus`, `Priority`, `TaskType`, `Assignment`, `Board` compatibles con SPEC-00.
+- [ ] Implementar `createTask`, `listTasks`, `setTaskStatus`, `getBoard`.
+- [ ] Agregar tests unitarios con Supabase mock/stub para defaults, filtros, columnas, alertas, impacto reciente y validación de status.
+- [ ] Ejecutar validación live contra Supabase Cloud cuando haya credenciales.
+
 **Criterios de aceptación:**
 - [ ] `createTask` aplica defaults (`priority='media'`, `effort=1`, `status='pendiente'`, `required_skills=[]`).
 - [ ] `getBoard.columns` agrupa tareas por `status` (todas las claves de `TaskStatus`, aunque estén vacías).
@@ -469,7 +529,88 @@ delete from people where wa_phone = '5491100000099';
 - [ ] `getBoard.recent_impact` = últimos 5 `impact_reports` (headline + fecha), desc.
 - [ ] `getBoard.pending_approval` = assignments en `'propuesta'`.
 - [ ] `setTaskStatus` valida que el status sea un `TaskStatus`.
-**Validación:** seed con una tarea `deadline = now()+2h` → aparece en `alerts`; con `deadline = now()+3d` → no.
+
+**Validación unitaria mínima:**
+- `createTask({ title:'x' })` aplica defaults.
+- `listTasks({ status:'pendiente' })` devuelve solo pendientes.
+- `listTasks({ person_id })` devuelve solo tareas con assignment `aprobada` de esa persona.
+- `setTaskStatus(task_id,'en_curso')` persiste y devuelve la tarea.
+- `setTaskStatus(task_id,'invalid' as TaskStatus)` falla antes de Supabase.
+- `getBoard().columns` contiene exactamente las 6 claves de `TaskStatus`.
+- Una tarea `deadline = now()+2h`, `status='pendiente'` aparece en `alerts`.
+- Una tarea `deadline = now()+3d`, `status='pendiente'` no aparece en `alerts`.
+- Una tarea `deadline = now()+2h`, `status='hecha'` no aparece en `alerts`.
+- `recent_impact` trae máximo 5, orden desc.
+- `pending_approval` trae solo assignments `propuesta`.
+
+**Validación live SQL opcional:** si el executor valida directo en Supabase, usar títulos reservados y limpiar al final.
+
+```sql
+with coord as (
+  select id from people where wa_phone = '5491100000001'
+),
+person as (
+  select id from people where wa_phone = '5491100000002'
+),
+cleanup_assignments as (
+  delete from assignments a
+  using tasks t
+  where a.task_id = t.id
+    and t.title in ('Smoke D4 alerta', 'Smoke D4 futura', 'Smoke D4 hecha')
+  returning a.id
+),
+cleanup_tasks as (
+  delete from tasks
+  where title in ('Smoke D4 alerta', 'Smoke D4 futura', 'Smoke D4 hecha')
+  returning id
+),
+created as (
+  insert into tasks (title, effort, deadline, status, created_by)
+  select 'Smoke D4 alerta', 1, now() + interval '2 hours', 'pendiente', coord.id from coord
+  union all
+  select 'Smoke D4 futura', 1, now() + interval '3 days', 'pendiente', coord.id from coord
+  union all
+  select 'Smoke D4 hecha', 1, now() + interval '2 hours', 'hecha', coord.id from coord
+  returning id, title, status, deadline
+),
+approved_assignment as (
+  insert into assignments (task_id, person_id, status, reason)
+  select created.id, person.id, 'aprobada', 'Smoke D4 approved assignment'
+  from created, person
+  where created.title = 'Smoke D4 alerta'
+  returning id
+),
+pending_assignment as (
+  insert into assignments (task_id, person_id, status, reason)
+  select created.id, person.id, 'propuesta', 'Smoke D4 pending assignment'
+  from created, person
+  where created.title = 'Smoke D4 futura'
+  returning id
+)
+select title, status, deadline
+from created
+order by title;
+
+select t.title
+from tasks t
+where t.deadline < now() + interval '24 hours'
+  and t.status != 'hecha'
+  and t.title like 'Smoke D4%'
+order by t.deadline asc;
+
+select a.status, count(*) as assignments
+from assignments a
+join tasks t on t.id = a.task_id
+where t.title like 'Smoke D4%'
+group by a.status
+order by a.status;
+
+delete from assignments
+where task_id in (select id from tasks where title like 'Smoke D4%');
+
+delete from tasks
+where title like 'Smoke D4%';
+```
 
 ### SPEC-D.5 — Asignaciones (persistencia de la doble aprobación)
 **Funciones:** `db.insertAssignment`, `db.getAssignment`, `db.setAssignmentStatus`, `db.readPersonLoad`.

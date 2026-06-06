@@ -42,6 +42,35 @@ Executor tasks after D.2:
 
 ---
 
+## 2.a Antigravity Homework
+
+Antigravity should execute D.3 as the next implementation homework once D.2 is stable.
+
+Homework checklist:
+- [ ] Pull latest `data-engineer`.
+- [ ] Stay on branch `data-engineer`; do not work on `main`.
+- [ ] Implement only D.3 people functions.
+- [ ] Keep write scope narrow:
+  - `package.json`
+  - `package-lock.json`
+  - `src/domain/types.ts` or a new SPEC-00-compatible data types file
+  - new server-side Supabase client module
+  - new `db.*` module
+  - focused D.3 tests
+  - this results artifact
+- [ ] Use `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` server-side only.
+- [ ] Validate unit tests locally.
+- [ ] Run optional live validation against project `tjpfstdhxsgwyejlosfq`.
+- [ ] Fill section 5 with evidence.
+- [ ] Commit and push to `origin/data-engineer`.
+
+Do not:
+- [ ] Do not change schema.
+- [ ] Do not implement D.4 task functions in the D.3 commit.
+- [ ] Do not overwrite D.4 spec work if it appears while D.3 is in progress.
+
+---
+
 ## 3. Acceptance Gates
 
 SPEC-D.3 is done only when all gates pass.
