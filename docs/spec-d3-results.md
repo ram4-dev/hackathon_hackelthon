@@ -108,7 +108,7 @@ Fill this after implementation and validation.
 | `db.*` module path | `src/lib/db.ts` |
 | Unit tests command | `npm run test src/lib/db.test.ts` |
 | Unit tests result | 5 tests passed |
-| Live Supabase validation | Skipped (Optional, no local .env service key) |
+| Live Supabase validation | Passed |
 | Executor | Antigravity |
 
 Validation output:
