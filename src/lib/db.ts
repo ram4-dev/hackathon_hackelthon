@@ -7,9 +7,18 @@ import type {
 	Priority,
 	TaskType,
 	Assignment,
+	AssignmentStatus,
 	Board,
 	ImpactReportSummary,
+	PersonLoad,
 } from "../domain/types";
+
+const ASSIGNMENT_STATUSES: AssignmentStatus[] = [
+	"propuesta",
+	"aprobada_coord",
+	"aprobada",
+	"rechazada",
+];
 
 const TASK_STATUSES: TaskStatus[] = [
 	"pendiente",
@@ -271,5 +280,89 @@ export const db = {
 			alerts,
 			recent_impact: (impactResult.data ?? []) as ImpactReportSummary[],
 		};
+	},
+
+	// --- SPEC-D.5 ---
+
+	async insertAssignment(input: {
+		task_id: string;
+		person_id: string;
+		reason?: string;
+	}): Promise<Assignment> {
+		const payload = {
+			task_id: input.task_id,
+			person_id: input.person_id,
+			reason: input.reason,
+			status: "propuesta" as AssignmentStatus,
+			proposed_at: new Date().toISOString(),
+		};
+
+		const { data, error } = await supabase
+			.from("assignments")
+			.insert(payload)
+			.select()
+			.single();
+
+		if (error) throw error;
+		return data as Assignment;
+	},
+
+	async getAssignment(id: string): Promise<Assignment | null> {
+		const { data, error } = await supabase
+			.from("assignments")
+			.select("*")
+			.eq("id", id)
+			.maybeSingle();
+
+		if (error) throw error;
+		return data as Assignment | null;
+	},
+
+	async setAssignmentStatus(
+		id: string,
+		status: AssignmentStatus,
+		opts?: { coord_id?: string; rejected_by?: string }
+	): Promise<Assignment> {
+		if (!ASSIGNMENT_STATUSES.includes(status)) {
+			throw new Error(`Invalid assignment status: ${status}`);
+		}
+
+		const patch: Record<string, unknown> = { status };
+
+		if (status === "aprobada_coord") {
+			if (!opts?.coord_id) throw new Error("coord_id required for aprobada_coord");
+			patch.coord_id = opts.coord_id;
+			patch.coord_decision_at = new Date().toISOString();
+		}
+
+		if (status === "aprobada") {
+			patch.responded_at = new Date().toISOString();
+		}
+
+		if (status === "rechazada") {
+			if (!opts?.rejected_by) throw new Error("rejected_by required for rechazada");
+			patch.rejected_by = opts.rejected_by;
+			patch.responded_at = new Date().toISOString();
+		}
+
+		const { data, error } = await supabase
+			.from("assignments")
+			.update(patch)
+			.eq("id", id)
+			.select()
+			.single();
+
+		if (error) throw error;
+		if (!data) throw new Error(`Assignment not found: ${id}`);
+		return data as Assignment;
+	},
+
+	async readPersonLoad(): Promise<PersonLoad[]> {
+		const { data, error } = await supabase
+			.from("person_load")
+			.select("*");
+
+		if (error) throw error;
+		return (data ?? []) as PersonLoad[];
 	},
 };

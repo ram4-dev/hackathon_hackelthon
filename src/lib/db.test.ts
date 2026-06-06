@@ -391,3 +391,128 @@ describe('db task functions (SPEC-D.4)', () => {
 		expect(board.pending_approval).toEqual(pendingAssignments);
 	});
 });
+
+describe('db assignment functions (SPEC-D.5)', () => {
+	let mockFrom: any;
+	let mockSingle: any;
+	let mockMaybeSingle: any;
+	let mockInsert: any;
+	let mockUpdate: any;
+	let mockSelect: any;
+	let mockEq: any;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+
+		mockSingle = vi.fn();
+		mockMaybeSingle = vi.fn();
+
+		mockEq = vi.fn().mockReturnValue({
+			maybeSingle: mockMaybeSingle,
+			select: vi.fn().mockReturnValue({ single: mockSingle }),
+			single: mockSingle,
+		});
+
+		mockSelect = vi.fn().mockReturnValue({
+			eq: mockEq,
+			then: (r: any) => r({ data: [], error: null }),
+		});
+
+		mockInsert = vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnValue({ single: mockSingle }),
+		});
+
+		mockUpdate = vi.fn().mockReturnValue({
+			eq: vi.fn().mockReturnValue({
+				select: vi.fn().mockReturnValue({ single: mockSingle }),
+			}),
+		});
+
+		mockFrom = vi.fn().mockReturnValue({
+			select: mockSelect,
+			insert: mockInsert,
+			update: mockUpdate,
+		});
+
+		(supabase.from as any) = mockFrom;
+	});
+
+	it('insertAssignment creates with status propuesta', async () => {
+		const created = { id: 'aid', task_id: 't1', person_id: 'p1', status: 'propuesta', proposed_at: '' };
+		mockSingle.mockResolvedValue({ data: created, error: null });
+
+		const result = await db.insertAssignment({ task_id: 't1', person_id: 'p1' });
+
+		expect(mockInsert).toHaveBeenCalledWith(
+			expect.objectContaining({ task_id: 't1', person_id: 'p1', status: 'propuesta' })
+		);
+		expect(result).toEqual(created);
+	});
+
+	it('getAssignment returns null when missing', async () => {
+		mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+		const res = await db.getAssignment('no-exist');
+		expect(res).toBeNull();
+	});
+
+	it('setAssignmentStatus rejects invalid status', async () => {
+		await expect(
+			db.setAssignmentStatus('aid', 'invalid' as any)
+		).rejects.toThrow('Invalid assignment status');
+		expect(mockFrom).not.toHaveBeenCalled();
+	});
+
+	it('setAssignmentStatus aprobada_coord requires coord_id', async () => {
+		await expect(
+			db.setAssignmentStatus('aid', 'aprobada_coord')
+		).rejects.toThrow('coord_id required');
+	});
+
+	it('setAssignmentStatus aprobada_coord sets coord_id and coord_decision_at', async () => {
+		const updated = { id: 'aid', status: 'aprobada_coord', coord_id: 'cid', coord_decision_at: '' };
+		mockSingle.mockResolvedValue({ data: updated, error: null });
+
+		const result = await db.setAssignmentStatus('aid', 'aprobada_coord', { coord_id: 'cid' });
+
+		const updateCall = mockUpdate.mock.calls[0][0];
+		expect(updateCall.coord_id).toBe('cid');
+		expect(updateCall.coord_decision_at).toBeDefined();
+		expect(result).toEqual(updated);
+	});
+
+	it('setAssignmentStatus aprobada sets responded_at', async () => {
+		const updated = { id: 'aid', status: 'aprobada', responded_at: '' };
+		mockSingle.mockResolvedValue({ data: updated, error: null });
+
+		await db.setAssignmentStatus('aid', 'aprobada');
+
+		const updateCall = mockUpdate.mock.calls[0][0];
+		expect(updateCall.responded_at).toBeDefined();
+	});
+
+	it('setAssignmentStatus rechazada requires rejected_by', async () => {
+		await expect(
+			db.setAssignmentStatus('aid', 'rechazada')
+		).rejects.toThrow('rejected_by required');
+	});
+
+	it('setAssignmentStatus rechazada sets rejected_by and responded_at', async () => {
+		const updated = { id: 'aid', status: 'rechazada', rejected_by: 'coordinador' };
+		mockSingle.mockResolvedValue({ data: updated, error: null });
+
+		await db.setAssignmentStatus('aid', 'rechazada', { rejected_by: 'coordinador' });
+
+		const updateCall = mockUpdate.mock.calls[0][0];
+		expect(updateCall.rejected_by).toBe('coordinador');
+		expect(updateCall.responded_at).toBeDefined();
+	});
+
+	it('readPersonLoad returns rows from person_load view', async () => {
+		const rows = [{ id: 'p1', name: 'Ana', capacity: 'media', active_effort: 2, active_tasks: 1 }];
+		mockSelect.mockReturnValue({ then: (r: any) => r({ data: rows, error: null }) });
+
+		const result = await db.readPersonLoad();
+		expect(result).toEqual(rows);
+		expect(mockFrom).toHaveBeenCalledWith('person_load');
+	});
+});

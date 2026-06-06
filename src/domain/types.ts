@@ -162,3 +162,18 @@ export interface Board {
 	recent_impact: ImpactReportSummary[];
 }
 
+// --- SPEC-D.5 Types ---
+export type AssignmentStatus =
+	| "propuesta"
+	| "aprobada_coord"
+	| "aprobada"
+	| "rechazada";
+
+export interface PersonLoad {
+	id: string;
+	name: string;
+	capacity: Capacity;
+	active_effort: number;
+	active_tasks: number;
+}
+
