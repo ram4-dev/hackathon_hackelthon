@@ -3,7 +3,7 @@
 > **Hackatón Solidaria (Halketon) — Paisanos · Crecimiento Build · Querido Lunes · Fardo**
 > Track 1 — Coordinación y memoria interna · 6 de junio de 2026
 > Equipo: 1 Backend · 1 ML · 1 Data Engineer · **Ventana: 4 horas para el MVP**
-> *Nombre de trabajo: **"Pulso"** · v3 (suma doble aprobación con Coordinador)*
+> *Nombre de trabajo: **"Pulso"** · v4 (knowledge base estilo LLM Wiki, acceso a datos vía `supabase-js`, UI de WhatsApp precisada)*
 
 ---
 
@@ -88,7 +88,7 @@ Con 4 horas, la regla es: **que el ciclo central funcione punta a punta en una d
 ### 🟡 Nice-to-have (si sobra tiempo)
 - **Reasignar** desde el coordinador (elegir otra persona vía lista) en lugar de solo aprobar/rechazar.
 - Inferencia de conocimiento desde la conversación (el agente "aprende" skills/disponibilidad).
-- Búsqueda de conocimiento de la ONG (`searchKnowledge`).
+- Mantenimiento del knowledge base estilo *LLM Wiki*: el agente **integra y deduplica** lo que aprende, no solo agrega (la búsqueda no hace falta a esta escala — ver §11.a).
 - Recordatorios de vencimiento (Vercel Cron).
 - Balanceo entre **varios** candidatos y tareas que necesitan **varias personas**.
 - Vista agregada de impacto (feed de titulares + rollup por tipo).
@@ -363,10 +363,10 @@ recordImpactReport(task_id: string, answers: Record<string,string>): ImpactRepor
 getImpactReport(task_id: string): ImpactReport | null
 getOrgImpact(filter?: { task_type?: string }): { headlines: string[]; by_type: Record<string, number> }
 
-// --- Conocimiento ---
+// --- Conocimiento (estilo "LLM Wiki": se carga entero en contexto, sin RAG; ver §11.a) ---
+loadKnowledge(): Knowledge[]                                    // trae TODO el KB para inyectar en el system prompt
 addKnowledge(input: { content: string; kind?: string; tags?: string[]; source?: string }): Knowledge
-searchKnowledge(query: string, limit?: number): Knowledge[]
-inferKnowledge(conversationText: string): Knowledge[]
+inferKnowledge(conversationText: string): Knowledge[]           // integra/deduplica en el KB, no solo agrega
 
 // --- WhatsApp (Kapso) ---
 sendText(wa_phone: string, text: string): void
@@ -395,22 +395,26 @@ score(person, task) =
 
 ---
 
-## 11. Decisiones clave (Q&A)
+## 11. Decisiones clave a pulir juntos
 
-**a) ¿Buckets / KV / relacional?** → **Relacional (Postgres).** Supabase *es* Postgres y los datos necesitan joins (carga, impacto, doble aprobación). Buckets = archivos (no aplica); no hay KV nativo. 5 tablas + 1 vista, minutos.
-RTA: Un bucket de formato LLM WIKI con un index.md
-https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+**a) ¿Buckets / KV / relacional?** → **Hay dos tipos de dato y van en lugares distintos.**
+   - **Datos operativos** (personas, tareas, asignaciones, balances) → **Relacional (Postgres).** Supabase *es* Postgres y necesitan joins (carga, impacto, doble aprobación). Buckets = archivos (no aplica); no hay KV nativo. 5 tablas + 1 vista, minutos.
+   - **Knowledge base de la ONG** (procesos, "quién sabe qué", cómo se hace cada cosa) → patrón **LLM Wiki** (el gist de Karpathy): conocimiento que el agente **mantiene incrementalmente** —integra y deduplica en vez de solo apilar. La clave para el MVP: a esta escala (una ONG chica son unos pocos miles de tokens, *muy* por debajo del umbral donde conviene RAG) **se carga el KB entero en el contexto del agente, sin vector DB, sin búsqueda semántica**. Es más simple *y* más confiable que RAG. Guardamos el KB como filas de texto en `knowledge` (storage barato), pero el acceso es "traer todo e inyectar en el system prompt", no "buscar". `pgvector` queda para cuando el KB no entre en contexto (post-MVP).
 
-**b) ¿MCP de Supabase en runtime?** → **No. MCP para dev-time; `supabase-js` para runtime.** El MCP que te cree esquema + vista + seed en Claude Code; el agente le pega con `supabase-js` directo. *MCP = andamiaje; `supabase-js` = músculo.*
+**b) ¿MCP de Supabase en runtime? ¿Y cómo "lee" el agente?** → **No MCP en runtime. MCP para dev-time; `supabase-js` para runtime.**
+   El malentendido común: el agente no "se conecta" a Supabase ni le habla al MCP en producción. **El agente lee llamando *tools*, y cada tool es una función async normal que adentro hace una query con `supabase-js`.** El flujo es: el LLM decide que necesita datos → emite un *tool call* (ej. `getBoard`) → tu código corre `await supabase.from('tasks').select(...)` → le devolvés el JSON al LLM → el LLM lo usa para responder. El LLM nunca toca la base directo; siempre pasa por tus funciones (que validan con Zod). El **MCP** sirve para que **Claude Code te arme el esquema, la vista y el seed** en dev-time. *MCP = andamiaje; `supabase-js` = músculo.* **El código concreto de este patrón está en el RFC.**
 
-**c) ¿"Tablero / UI dentro de WhatsApp"?** → **Mensajes interactivos, no Flows** (Flows piden verificación de Meta → bloqueante). Tablero = texto + lista; approve/done/coordinador = botones.
+**c) ¿"Tablero / UI dentro de WhatsApp" con Kapso?** → **Sí construís UI, pero la paleta la fija WhatsApp, no Kapso.** Kapso es "WhatsApp para developers" (una capa sobre la Cloud API); lo que podés renderizar es lo que WhatsApp permite: **botones de respuesta (máx 3), mensajes de lista (máx 10 filas, seccionadas), media, y Flows (formularios multi-pantalla).** No hay UI arbitraria —WhatsApp no lo permite— pero botones + listas + texto formateado **ya son una UI interactiva** y alcanzan para el tablero, el approve y el cierre, **sin ningún bloqueante**.
+   - **Flows** es lo más parecido a una "pantalla de app" y sería el tablero más lindo, **pero requiere un Meta Business Portfolio verificado** (requisito de *Meta*, no de Kapso; trámite de días). *Posible atajo:* si la demo corre sobre un **número pre-verificado provisto por Kapso**, los Flows podrían estar disponibles sin tu propio trámite —**confirmalo con Kapso, pero no apuestes la demo a eso**. Para 4 h: botones + listas; un Flow read-only como tablero es stretch *solo* si el camino de verificación está claro.
+   - **Repos de referencia (úsenlos):** `gokapso/whatsapp-cloud-inbox` (botones/listas interactivas + ventana de 24 h, justo lo que necesitan), `gokapso/whatsapp-cloud-api-js` (cliente TS), `gokapso/agent-skills` y `gokapso/claude-code-whatsapp` (patrón de agente sobre WhatsApp).
 
-**d) Onboarding** → `nombre` · `área/rol` · `2-3 skills` · `disponibilidad` (botones) + flag coordinador (seedeado). Preguntas flexibles.
+**d) Onboarding** → `nombre` · `área/rol` · `2-3 skills` · `disponibilidad` (botones) + flag coordinador (seedeado). Más liviano aún: solo `nombre + skills` e inferir el resto.
 
 **e) Agregación del impacto** → métricas **heterogéneas** no se suman. **MVP:** feed de titulares + conteo por tipo (`getOrgImpact`). La agregación cross-métrica "real" es post-MVP.
 
 **f) Doble aprobación — el orden y cuándo aplica:**
    - **Orden (default elegido):** agente propone → **coordinador aprueba/reasigna** (decide *quién*) → **persona confirma** (decide *si puede*). Razón: el coordinador controla la distribución (necesidad de la dirección) y la persona conserva autonomía, sin que nadie se comprometa a algo que después se veta.
+   - *Alternativa:* persona acepta primero → coordinador da el ok final. Más natural si la persona se autopropone, pero arriesga vetar algo ya comprometido. (No recomendado para el MVP.)
    - **¿Cuándo se exige la aprobación del coordinador?** Configurable. MVP: **siempre** (muestra la gobernanza). En producción se puede limitar a tareas de alta prioridad/esfuerzo, o **solo a ciertas personas** (p. ej. voluntarios nuevos) — ése es el caso "a *x* personas".
    - **¿Quién es el coordinador?** MVP: uno seedeado (o varios; el primero que responde decide). Multi-coordinador con ruteo fino = post-MVP.
 
