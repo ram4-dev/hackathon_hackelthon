@@ -24,11 +24,11 @@ default_tools_approval_mode = "prompt"
 ```
 
 Not completed by Codex:
-- [ ] Supabase Cloud MCP authentication.
-- [ ] Migration execution in Supabase Cloud.
-- [ ] Smoke query execution against the live database.
+- [x] Supabase Cloud MCP authentication.
+- [x] Migration execution in Supabase Cloud.
+- [x] Smoke query execution against the live database.
 
-Reason: this Codex session does not currently expose an authenticated Supabase MCP tool.
+Reason: Resolved by configuring the remote Supabase MCP server settings on Antigravity and executing the migration pipeline.
 
 ---
 
@@ -37,11 +37,11 @@ Reason: this Codex session does not currently expose an authenticated Supabase M
 Antigravity must execute SPEC-D.1 in Supabase Cloud.
 
 Tasks:
-- [ ] Connect to the hosted Supabase MCP: `https://mcp.supabase.com/mcp`.
-- [ ] Confirm the target Supabase project before applying changes.
-- [ ] If the project ref is known, scope the MCP endpoint to `https://mcp.supabase.com/mcp?project_ref=<SUPABASE_PROJECT_REF>`.
-- [ ] Apply migration `001_spec_d1_schema` from `docs/spec-data-engineer.md`.
-- [ ] Confirm all required relations exist:
+- [x] Connect to the hosted Supabase MCP: `https://mcp.supabase.com/mcp`.
+- [x] Confirm the target Supabase project before applying changes.
+- [x] If the project ref is known, scope the MCP endpoint to `https://mcp.supabase.com/mcp?project_ref=tjpfstdhxsgwyejlosfq`.
+- [x] Apply migration `001_spec_d1_schema` from `docs/spec-data-engineer.md`.
+- [x] Confirm all required relations exist:
   - `people`
   - `tasks`
   - `assignments`
@@ -51,17 +51,19 @@ Tasks:
   - `messages`
   - `processed_messages`
   - `person_load`
-- [ ] Run the smoke validation SQL from `docs/spec-data-engineer.md`.
-- [ ] Confirm the smoke output includes:
+- [x] Run the smoke validation SQL from `docs/spec-data-engineer.md`.
+- [x] Confirm the smoke output includes:
   - `active_effort = 3`
   - `active_tasks = 1`
-- [ ] Run the rollback SQL:
+- [x] Run the rollback SQL:
 
 ```sql
-delete from people where wa_phone = '5491100000000';
+delete from assignments where person_id = '16da2c20-edc4-4590-8a4a-fa1636a6d405';
+delete from tasks where created_by = '16da2c20-edc4-4590-8a4a-fa1636a6d405';
+delete from people where id = '16da2c20-edc4-4590-8a4a-fa1636a6d405';
 ```
 
-- [ ] Record the final execution evidence in section 5 of this artifact.
+- [x] Record the final execution evidence in section 5 of this artifact.
 
 ---
 
@@ -71,12 +73,12 @@ SPEC-D.1 is done only when all gates pass.
 
 | Gate | Expected result | Status |
 |---|---:|---|
-| Required tables exist | 8 tables | Pending Antigravity |
-| `person_load` view exists | 1 view | Pending Antigravity |
-| Insert/select works | Smoke SQL runs | Pending Antigravity |
-| Load calculation works | `active_effort = 3` | Pending Antigravity |
-| Task count calculation works | `active_tasks = 1` | Pending Antigravity |
-| Smoke data removed | rollback executed | Pending Antigravity |
+| Required tables exist | 8 tables | Passed |
+| `person_load` view exists | 1 view | Passed |
+| Insert/select works | Smoke SQL runs | Passed |
+| Load calculation works | `active_effort = 3` | Passed |
+| Task count calculation works | `active_tasks = 1` | Passed |
+| Smoke data removed | rollback executed | Passed |
 
 ---
 
@@ -98,24 +100,32 @@ Fill this after Antigravity runs the migration and smoke test.
 
 | Field | Value |
 |---|---|
-| Supabase project ref | TBD |
+| Supabase project ref | tjpfstdhxsgwyejlosfq |
 | Migration name/id | `001_spec_d1_schema` |
-| Migration applied at | TBD |
-| Smoke query executed at | TBD |
-| Smoke `person_load.id` | TBD |
-| Smoke `active_effort` | TBD |
-| Smoke `active_tasks` | TBD |
-| Rollback executed | TBD |
+| Migration applied at | 2026-06-06 18:47:37 UTC |
+| Smoke query executed at | 2026-06-06 18:47:48 UTC |
+| Smoke `person_load.id` | 16da2c20-edc4-4590-8a4a-fa1636a6d405 |
+| Smoke `active_effort` | 3 |
+| Smoke `active_tasks` | 1 |
+| Rollback executed | Yes |
 | Executor | Antigravity |
 
 Smoke output:
 
 ```text
-TBD
+[
+  {
+    "id": "16da2c20-edc4-4590-8a4a-fa1636a6d405",
+    "name": "Smoke Data Engineer",
+    "capacity": "media",
+    "active_effort": 3,
+    "active_tasks": 1
+  }
+]
 ```
 
 Final status:
 
 ```text
-Pending Antigravity execution.
+Completed successfully.
 ```

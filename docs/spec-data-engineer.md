@@ -198,12 +198,170 @@ delete from people where wa_phone = '5491100000000';
 ```
 
 ### SPEC-D.2 — Seed de demo
-**Comportamiento:** poblar datos creíbles para la demo.
+**Comportamiento:** poblar datos creíbles para la demo en Supabase Cloud, después de que SPEC-D.1 haya aplicado el esquema. El seed debe ser idempotente y mínimo: personas, knowledge y 1-2 tareas de ejemplo para que el tablero no arranque vacío.
+
+**Precondición:** SPEC-D.1 aplicado y validado en el proyecto Supabase Cloud.
+
+**MCP target:**
+- Servidor: `https://mcp.supabase.com/mcp?project_ref=tjpfstdhxsgwyejlosfq`
+- Features necesarias: `database`.
+- No usar `read_only=true` para esta spec, porque hay que insertar seed.
+
+**Delegación a Antigravity:** Codex no puede conectarse al MCP de Supabase desde esta sesión. Antigravity queda como agente ejecutor de SPEC-D.2 en Supabase Cloud.
+
+Tasks para Antigravity:
+- [ ] Confirmar que SPEC-D.1 ya existe en el proyecto `tjpfstdhxsgwyejlosfq`.
+- [ ] Aplicar el seed `002_spec_d2_demo_seed` con el SQL de esta sección.
+- [ ] Verificar que hay 4 personas activas y al menos 1 coordinador activo.
+- [ ] Verificar que hay 5 filas de `knowledge` con `source='demo_seed_spec_d2'`.
+- [ ] Verificar que hay 2 tareas demo creadas por la coordinadora seed.
+- [ ] Verificar que hay 1 assignment `propuesta` para alimentar `getBoard.pending_approval`.
+- [ ] Ejecutar las queries de validación y registrar evidencia en `docs/spec-d2-results.md`.
+
+Guardrails para Antigravity:
+- No tocar filas que no sean del demo seed.
+- No cambiar el esquema: D.2 solo inserta datos.
+- No implementar `db.*` todavía.
+- No usar datos personales reales: teléfonos y nombres son ficticios para demo.
+- Si el proyecto ya tiene seed del equipo, coordinar antes de borrar/resembrar filas demo.
+
+**Seed requerido:** aplicar una migración/seed idempotente. Nombre sugerido: `002_spec_d2_demo_seed`.
+
+```sql
+begin;
+
+delete from tasks t
+using people p
+where t.created_by = p.id
+  and p.wa_phone = '5491100000001'
+  and t.title in (
+    'Preparar informe para donantes',
+    'Organizar charla de derechos digitales'
+  );
+
+delete from knowledge
+where source = 'demo_seed_spec_d2';
+
+insert into people (wa_phone, name, role, skills, capacity, is_coordinator, timezone, active)
+values
+  ('5491100000001', 'Lucia Coordinadora', 'Coordinacion general', array['coordinacion','gestion','donantes'], 'alta', true, 'America/Argentina/Buenos_Aires', true),
+  ('5491100000002', 'Ana Voluntaria', 'Comunicacion', array['redaccion','difusion','datos'], 'media', false, 'America/Argentina/Buenos_Aires', true),
+  ('5491100000003', 'Bruno Tallerista', 'Formacion', array['facilitacion','comunidad','charlas'], 'baja', false, 'America/Argentina/Buenos_Aires', true),
+  ('5491100000004', 'Carla Operaciones', 'Atencion territorial', array['logistica','atencion','relevamiento'], 'alta', false, 'America/Argentina/Buenos_Aires', true)
+on conflict (wa_phone) do update
+set name = excluded.name,
+    role = excluded.role,
+    skills = excluded.skills,
+    capacity = excluded.capacity,
+    is_coordinator = excluded.is_coordinator,
+    timezone = excluded.timezone,
+    active = excluded.active;
+
+insert into knowledge (content, kind, tags, source)
+values
+  ('La ONG prioriza acciones de educacion, acompanamiento territorial y rendicion transparente a donantes.', 'hecho', array['ong','prioridades'], 'demo_seed_spec_d2'),
+  ('Toda tarea que impacta a beneficiarios debe cerrarse con un balance de impacto cuantificado.', 'politica', array['impacto','cierre'], 'demo_seed_spec_d2'),
+  ('Los informes para donantes deben incluir alcance, resultados concretos y proximo paso recomendado.', 'proceso', array['donantes','informes'], 'demo_seed_spec_d2'),
+  ('Las charlas comunitarias se coordinan con al menos 72 horas de anticipacion y un responsable de materiales.', 'proceso', array['charlas','logistica'], 'demo_seed_spec_d2'),
+  ('El equipo usa WhatsApp como canal operativo principal; las decisiones importantes quedan registradas por el agente.', 'hecho', array['whatsapp','operacion'], 'demo_seed_spec_d2');
+
+with coord as (
+  select id from people where wa_phone = '5491100000001'
+),
+ana as (
+  select id from people where wa_phone = '5491100000002'
+),
+created_tasks as (
+  insert into tasks (title, description, task_type, priority, required_skills, effort, deadline, status, created_by)
+  select 'Preparar informe para donantes',
+         'Armar un resumen de resultados del mes con datos de actividades y aprendizajes.',
+         'informe',
+         'alta',
+         array['redaccion','datos'],
+         3,
+         now() + interval '2 hours',
+         'pendiente',
+         coord.id
+  from coord
+  union all
+  select 'Organizar charla de derechos digitales',
+         'Coordinar una charla comunitaria introductoria y preparar materiales de apoyo.',
+         'charla',
+         'media',
+         array['facilitacion','comunidad'],
+         2,
+         now() + interval '3 days',
+         'propuesta',
+         coord.id
+  from coord
+  returning id, title
+)
+insert into assignments (task_id, person_id, status, reason)
+select created_tasks.id,
+       ana.id,
+       'propuesta',
+       'Seed demo: Ana tiene skills de comunicacion y carga media para validar pending_approval.'
+from created_tasks, ana
+where created_tasks.title = 'Organizar charla de derechos digitales';
+
+commit;
+```
+
+**Notas de alcance:**
+- Este seed usa `source='demo_seed_spec_d2'` para poder distinguir knowledge demo.
+- Las personas se upsertean por `wa_phone`, que ya es unique en SPEC-D.1.
+- Las tareas demo se borran y recrean en cada corrida para mantener deadlines relativos (`now()+2h` y `now()+3d`).
+- La assignment `propuesta` es intencional para que `getBoard.pending_approval` tenga datos apenas D.4 exista.
+
 **Criterios de aceptación:**
 - [ ] 3-4 personas con `skills` y `capacity` variados; **al menos 1 con `is_coordinator = true`**.
 - [ ] 3-5 filas en `knowledge` (procesos/hechos de una ONG ficticia).
 - [ ] Opcional: 1-2 tareas en estados distintos para que `getBoard` no venga vacío.
-**Validación:** `db.getBoard()` y `db.listCoordinators()` devuelven datos no vacíos.
+- [ ] 1 assignment `propuesta` para validar el pending approval del tablero.
+
+**Validación:** ejecutar estas queries en Supabase Cloud y registrar resultados.
+
+```sql
+select count(*) as active_people
+from people
+where active = true
+  and wa_phone in ('5491100000001','5491100000002','5491100000003','5491100000004');
+
+select count(*) as active_coordinators
+from people
+where active = true
+  and is_coordinator = true
+  and wa_phone in ('5491100000001','5491100000002','5491100000003','5491100000004');
+
+select count(*) as demo_knowledge
+from knowledge
+where source = 'demo_seed_spec_d2';
+
+select t.status, count(*) as tasks
+from tasks
+join people p on p.id = t.created_by
+where p.wa_phone = '5491100000001'
+  and t.title in ('Preparar informe para donantes', 'Organizar charla de derechos digitales')
+group by t.status
+order by t.status;
+
+select count(*) as pending_approval
+from assignments a
+join tasks t on t.id = a.task_id
+join people creator on creator.id = t.created_by
+join people candidate on candidate.id = a.person_id
+where a.status = 'propuesta'
+  and creator.wa_phone = '5491100000001'
+  and candidate.wa_phone = '5491100000002'
+  and t.title = 'Organizar charla de derechos digitales';
+```
+
+Resultados esperados:
+- `active_people = 4`
+- `active_coordinators >= 1`
+- `demo_knowledge = 5`
+- tareas: 1 `pendiente`, 1 `propuesta`
+- `pending_approval = 1`
 
 ### SPEC-D.3 — Personas
 **Funciones:** `db.upsertPerson`, `db.getPersonByPhone`, `db.listCoordinators`.
