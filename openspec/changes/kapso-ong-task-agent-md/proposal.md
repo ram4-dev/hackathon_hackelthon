@@ -2,7 +2,9 @@
 
 ## Status
 
-Proposed.
+Proposed; reference-only for backend implementation slices.
+
+> SSoT update: backend implementation now proceeds through `docs/spec-backend-ssot.md` and the six `openspec/changes/backend-*` slices. Keep this broad change as context for product intent and already-derived requirements; do not use it to override the new backend slices.
 
 ## Source
 

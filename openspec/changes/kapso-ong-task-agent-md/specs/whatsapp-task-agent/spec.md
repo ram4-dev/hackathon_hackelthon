@@ -1,5 +1,7 @@
 # Delta Spec — WhatsApp NGO task agent
 
+> SSoT update: this broad delta spec is reference-only for backend implementation where it overlaps the newer backend slices. Use `docs/spec-backend-ssot.md` and `openspec/changes/backend-*` as the current backend SSoT.
+
 ## ADDED Requirements
 
 ### Requirement: Kapso webhook ingestion

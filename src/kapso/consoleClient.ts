@@ -1,4 +1,4 @@
-import type { KapsoButton, OutboundClient } from "./client.js";
+import type { KapsoButton, KapsoListRow, OutboundClient } from "./client.js";
 
 export class ConsoleOutboundClient implements OutboundClient {
 	async sendText(to: string, body: string): Promise<void> {
@@ -11,6 +11,14 @@ export class ConsoleOutboundClient implements OutboundClient {
 		buttons: KapsoButton[],
 	): Promise<void> {
 		console.log("Kapso buttons", { to, bodyText, buttons });
+	}
+
+	async sendList(
+		to: string,
+		bodyText: string,
+		rows: KapsoListRow[],
+	): Promise<void> {
+		console.log("Kapso list", { to, bodyText, rows });
 	}
 
 	async sendTemplate(
