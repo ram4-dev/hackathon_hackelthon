@@ -6,7 +6,7 @@
 
 ## What is this?
 
-This layer is the **data backbone** of Pulso — a WhatsApp-based coordination agent for NGOs. It sits between Supabase (the database) and every other layer (the AI agent, backend, ML scoring). Nobody talks to Postgres directly; they call `db.*` functions from this module.
+This layer is the **data backbone** of Hornero — a WhatsApp-based coordination agent for NGOs. It sits between Supabase (the database) and every other layer (the AI agent, backend, ML scoring). Nobody talks to Postgres directly; they call `db.*` functions from this module.
 
 Think of it as a typed API over the database. If you want to create a task, you call `db.createTask(...)`. If you want to know who is overloaded, you call `db.readPersonLoad()`. The shape of every response is guaranteed by TypeScript types.
 

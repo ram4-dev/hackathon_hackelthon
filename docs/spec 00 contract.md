@@ -1,4 +1,4 @@
-# SPEC-00 · Contrato compartido y Constitución (Pulso)
+# SPEC-00 · Contrato compartido y Constitución (Hornero)
 
 > **SSoT update para Backend:** este documento queda como contrato histórico/reference-only para backend cuando contradice el baseline actual. La fuente de verdad backend vigente es `docs/spec-backend-ssot.md` y los cambios `openspec/changes/backend-*` listados ahí. En particular, no se debe agregar Postgres/Supabase ni el modelo `Assignment` sin aprobar primero la slice decision-gated correspondiente.
 

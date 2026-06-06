@@ -87,7 +87,7 @@ Cualquier otra cosa se manda al agente como texto.`);
 
 async function main(): Promise<void> {
 	const rl = createInterface({ input: process.stdin, output: process.stdout });
-	console.log("💬 Pulso — harness local. /help para comandos. Usuario actual:", currentUser);
+	console.log("💬 Hornero — harness local. /help para comandos. Usuario actual:", currentUser);
 
 	while (true) {
 		const line = (await rl.question(`\n[${currentUser}] › `)).trim();
