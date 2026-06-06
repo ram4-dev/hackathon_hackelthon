@@ -1,5 +1,7 @@
 # Tasks — Kapso NGO WhatsApp task agent with Markdown storage
 
+> SSoT update: this broad task list is reference-only for backend implementation. Use `docs/spec-backend-ssot.md` and the six `openspec/changes/backend-*` slices for current backend work.
+
 ## Delivery strategy
 
 - User preflight choice: single PR default, no review line limit.

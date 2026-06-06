@@ -4,13 +4,25 @@ import {
 	type KapsoWebhookPayload,
 } from "../kapso/normalizeMessage.js";
 import type { MarkdownStore } from "../storage/markdownStore.js";
+import {
+	createDefaultButtonDispatcher,
+	type ButtonDispatcher,
+} from "./buttonRouter.js";
+import {
+	handleImportMode,
+	type ImportExtractor,
+} from "./importMode.js";
 import { handleOnboarding } from "./onboarding.js";
 import { routeInboundMessage } from "./stateMachine.js";
+import { createEchoTextHandler, type TextHandler } from "./textHandler.js";
 
 export type ProcessInboundDeps = {
 	store: MarkdownStore;
 	outbound: OutboundClient;
 	publicWhatsAppNumber?: string;
+	buttonDispatcher?: ButtonDispatcher;
+	textHandler?: TextHandler;
+	importExtractor?: ImportExtractor;
 };
 
 export async function processInboundMessage(
@@ -25,6 +37,15 @@ export async function processInboundMessage(
 
 	const routed = await routeInboundMessage(deps.store, normalized);
 
+	if (normalized.interactiveId) {
+		await (deps.buttonDispatcher ??
+			createDefaultButtonDispatcher({
+				store: deps.store,
+				outbound: deps.outbound,
+			}))(normalized.from, normalized.interactiveId);
+		return;
+	}
+
 	if (routed.mode === "onboarding" && routed.tenant.kind === "unknown") {
 		await handleOnboarding(normalized, routed.tenant, {
 			store: deps.store,
@@ -34,11 +55,17 @@ export async function processInboundMessage(
 		return;
 	}
 
-	// T8/T10 replace these logs with import/active handlers.
-	console.log("Routed inbound message", {
-		messageId: normalized.messageId,
-		from: normalized.from,
-		mode: routed.mode,
-		tenant: routed.tenant.kind,
-	});
+	if (routed.mode === "import" && routed.tenant.kind === "known") {
+		await handleImportMode(normalized, routed.tenant, {
+			store: deps.store,
+			outbound: deps.outbound,
+			importExtractor: deps.importExtractor,
+		});
+		return;
+	}
+
+	await (deps.textHandler ?? createEchoTextHandler(deps.outbound))(
+		normalized.from,
+		normalized.text,
+	);
 }

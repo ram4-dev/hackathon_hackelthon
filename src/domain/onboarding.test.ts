@@ -15,6 +15,9 @@ class FakeOutbound implements OutboundClient {
 	async sendButtons() {
 		/* not used */
 	}
+	async sendList() {
+		/* not used */
+	}
 	async sendTemplate() {
 		/* not used */
 	}

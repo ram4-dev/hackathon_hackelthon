@@ -462,6 +462,24 @@ export class MarkdownStore {
 		);
 	}
 
+	async tryMarkWebhookProcessed(input: {
+		key: string;
+		messageId: string;
+	}): Promise<boolean> {
+		let accepted = false;
+		await updateTextFile(this.processedPath(), (current) => {
+			const existing = parseTable(current);
+			if (existing.some((row) => row.key === input.key)) return current;
+
+			accepted = true;
+			return serializeTable(PROCESSED_HEADERS, [
+				...existing,
+				{ key: input.key, message_id: input.messageId, processed_at: now() },
+			]);
+		});
+		return accepted;
+	}
+
 	private async makeUniqueInviteCode(): Promise<string> {
 		const existing = new Set(
 			(await this.readRows(this.inviteIndexPath())).map(
