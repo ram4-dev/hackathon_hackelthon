@@ -18,7 +18,7 @@ import type {
 	Session,
 	Message,
 	MessageRole,
-} from "../domain/types";
+} from "../domain/types.js";
 
 const ASSIGNMENT_STATUSES: AssignmentStatus[] = [
 	"propuesta",

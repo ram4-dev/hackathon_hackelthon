@@ -1,5 +1,5 @@
-export type Priority = "low" | "med" | "high";
-export type TaskStatus = "open" | "done";
+export type LegacyPriority = "low" | "med" | "high";
+export type LegacyTaskStatus = "open" | "done";
 export type ConversationMode = "onboarding" | "import" | "active";
 export type SourceType =
 	| "text"
@@ -32,8 +32,8 @@ export type Task = {
 	title: string;
 	assigneeMemberId: string | null;
 	dueDate: string | null;
-	priority: Priority;
-	status: TaskStatus;
+	priority: LegacyPriority;
+	status: LegacyTaskStatus;
 	source: "import" | "chat";
 	createdAt: string;
 };
@@ -61,7 +61,7 @@ export type PendingImportTask = {
 	assignee: string | null;
 	assigneeMemberId?: string | null;
 	dueDate: string | null;
-	priority: Priority;
+	priority: LegacyPriority;
 };
 
 export type PendingImportMember = {
