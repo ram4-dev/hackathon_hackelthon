@@ -5,8 +5,16 @@ artifact_store: both
 sdd:
   execution_mode: auto
   source_spec: docs/spec-kapso-ong-task-agent.md
+  backend_source_spec: docs/spec-backend-ssot.md
   chained_pr_strategy: single-pr-default
   review_budget_lines: null
+  backend_ssot:
+    - openspec/changes/backend-kapso-outbound-list-limits
+    - openspec/changes/backend-webhook-dispatch-and-api-alias
+    - openspec/changes/backend-idempotency-fast-response-hardening
+    - openspec/changes/backend-deterministic-import-buttons
+    - openspec/changes/backend-assignment-approval-contract-decision
+    - openspec/changes/backend-deploy-sandbox-smoke
 constraints:
   - Resolve tenant on every inbound message from sender phone; never use global tenant state.
   - Use Kapso webhooks for inbound events and Kapso API/SDK for outbound messages.

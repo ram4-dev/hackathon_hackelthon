@@ -1,21 +1,34 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import type { AppEnv } from "./env.js";
+import type { ButtonDispatcher } from "./domain/buttonRouter.js";
 import { processInboundMessage } from "./domain/processInboundMessage.js";
-import { enqueue } from "./jobs/queue.js";
+import type { TextHandler } from "./domain/textHandler.js";
+import { enqueue as defaultEnqueue, type JobHandler } from "./jobs/queue.js";
 import { KapsoClient, type OutboundClient } from "./kapso/client.js";
 import { ConsoleOutboundClient } from "./kapso/consoleClient.js";
 import type { KapsoWebhookPayload } from "./kapso/normalizeMessage.js";
 import { verifyKapsoSignature } from "./kapso/verifyWebhook.js";
 import { MarkdownStore } from "./storage/markdownStore.js";
 
-export function createApp(env: AppEnv) {
+type EnqueueFn = <T>(handler: JobHandler<T>, payload: T) => void;
+
+export type CreateAppOptions = {
+	store?: MarkdownStore;
+	outbound?: OutboundClient;
+	enqueue?: EnqueueFn;
+	buttonDispatcher?: ButtonDispatcher;
+	textHandler?: TextHandler;
+};
+
+export function createApp(env: AppEnv, options: CreateAppOptions = {}) {
 	const app = new Hono();
-	const store = new MarkdownStore(env.dataDir);
-	const outbound = createOutboundClient(env);
+	const store = options.store ?? new MarkdownStore(env.dataDir);
+	const outbound = options.outbound ?? createOutboundClient(env);
+	const enqueue = options.enqueue ?? defaultEnqueue;
 
 	app.get("/health", (c) => c.json({ ok: true }));
 
-	app.post("/webhook", async (c) => {
+	const handleWebhook = async (c: Context) => {
 		const rawBody = await c.req.text();
 		const signature = c.req.header("x-webhook-signature");
 
@@ -43,23 +56,35 @@ export function createApp(env: AppEnv) {
 			return c.text("OK", 200);
 		}
 
-		if (await store.isWebhookProcessed(idempotencyKey)) {
+		// Hackathon retry semantics: atomically record the delivery as accepted
+		// before scheduling side effects. Accepted deliveries are non-retryable
+		// here; async failures are logged by the queue and later duplicate
+		// deliveries are ignored to prevent repeated WhatsApp replies or task
+		// mutations.
+		const accepted = await store.tryMarkWebhookProcessed({
+			key: idempotencyKey,
+			messageId,
+		});
+		if (!accepted) {
 			return c.text("Already processed", 200);
 		}
-
-		await store.markWebhookProcessed({ key: idempotencyKey, messageId });
 		enqueue(
 			(queuedPayload) =>
 				processInboundMessage(queuedPayload, {
 					store,
 					outbound,
 					publicWhatsAppNumber: env.kapsoPublicWhatsAppNumber,
+					buttonDispatcher: options.buttonDispatcher,
+					textHandler: options.textHandler,
 				}),
 			payload,
 		);
 
 		return c.text("OK", 200);
-	});
+	};
+
+	app.post("/webhook", handleWebhook);
+	app.post("/api/webhook", handleWebhook);
 
 	return app;
 }
