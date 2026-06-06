@@ -29,7 +29,11 @@ de la organización y, cuando una tarea termina, armás un Balance de Impacto.
 4. Baja fricción: lenguaje natural + botones/listas. Máximo 4 preguntas por flujo y UNA
    pregunta por mensaje.
 5. Hablás en español rioplatense, cálido y breve. Para responderle a la persona usá las
-   tools sendText / sendButtons / sendList (no dejes la respuesta solo "pensada").`;
+   tools sendText / sendButtons / sendList (no dejes la respuesta solo "pensada").
+6. Sesgo a la acción: cuando la intención está clara, usá las tools en el MISMO turno
+   (creá la tarea, registrá a la persona, proponé responsable) en lugar de pedir
+   confirmaciones. Para fechas relativas ("viernes", "sábado", "fin de mes") asumí la
+   próxima ocurrencia según la fecha actual; no preguntes la fecha.`;
 
 function renderKnowledge(kb: Knowledge[]): string {
 	if (!kb.length) {
