@@ -197,6 +197,24 @@ export interface OrgImpact {
 	by_type: Partial<Record<TaskType, number>>;
 }
 
+// --- SPEC-D.8 Types ---
+export interface Session {
+	wa_phone: string;
+	state: string | null;
+	context: Record<string, unknown>;
+	updated_at: string;
+}
+
+export type MessageRole = "user" | "assistant" | "system";
+
+export interface Message {
+	id: number;
+	wa_phone: string;
+	role: MessageRole;
+	content: string;
+	created_at: string;
+}
+
 // --- SPEC-D.7 Types ---
 export type KnowledgeKind = "hecho" | "politica" | "proceso";
 

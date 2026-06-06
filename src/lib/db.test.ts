@@ -699,3 +699,132 @@ describe('db knowledge functions (SPEC-D.7)', () => {
 		expect(mockFrom).not.toHaveBeenCalled();
 	});
 });
+
+describe('db session / history / idempotency functions (SPEC-D.8)', () => {
+	let mockFrom: any;
+	let mockSingle: any;
+	let mockMaybeSingle: any;
+	let mockSelect: any;
+	let mockEq: any;
+	let mockOrder: any;
+	let mockLimit: any;
+	let mockInsert: any;
+	let mockUpsert: any;
+	let mockDelete: any;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+
+		mockSingle = vi.fn();
+		mockMaybeSingle = vi.fn();
+		mockLimit = vi.fn().mockReturnValue({ then: (r: any) => r({ data: [], error: null }) });
+		mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+		mockEq = vi.fn().mockReturnValue({
+			maybeSingle: mockMaybeSingle,
+			order: mockOrder,
+			then: (r: any) => r({ data: null, error: null }),
+		});
+		mockSelect = vi.fn().mockReturnValue({ eq: mockEq, single: mockSingle });
+		mockInsert = vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnValue({ single: mockSingle }),
+		});
+		mockUpsert = vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnValue({ single: mockSingle }),
+		});
+		mockDelete = vi.fn().mockReturnValue({ eq: mockEq });
+
+		mockFrom = vi.fn().mockReturnValue({
+			select: mockSelect,
+			insert: mockInsert,
+			upsert: mockUpsert,
+			delete: mockDelete,
+		});
+
+		(supabase.from as any) = mockFrom;
+	});
+
+	it('getSession returns null when session does not exist', async () => {
+		mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+		const result = await db.getSession('549100');
+		expect(result).toBeNull();
+	});
+
+	it('getSession returns session when it exists', async () => {
+		const session = { wa_phone: '549100', state: 'active', context: {}, updated_at: '' };
+		mockMaybeSingle.mockResolvedValue({ data: session, error: null });
+		const result = await db.getSession('549100');
+		expect(result).toEqual(session);
+	});
+
+	it('setSession upserts with state, context and updated_at', async () => {
+		const session = { wa_phone: '549100', state: 'onboarding', context: { step: 1 }, updated_at: '' };
+		mockSingle.mockResolvedValue({ data: session, error: null });
+
+		await db.setSession('549100', 'onboarding', { step: 1 });
+
+		expect(mockUpsert).toHaveBeenCalledWith(
+			expect.objectContaining({ wa_phone: '549100', state: 'onboarding', context: { step: 1 } }),
+			{ onConflict: 'wa_phone' }
+		);
+	});
+
+	it('clearSession deletes the session row', async () => {
+		mockEq.mockReturnValue({ then: (r: any) => r({ error: null }) });
+		await db.clearSession('549100');
+		expect(mockFrom).toHaveBeenCalledWith('sessions');
+		expect(mockDelete).toHaveBeenCalled();
+	});
+
+	it('loadHistory returns messages in chronological order (reversed from desc fetch)', async () => {
+		const msgs = [
+			{ id: 2, wa_phone: '549100', role: 'assistant', content: 'Hi', created_at: '2024-01-01T00:00:02Z' },
+			{ id: 1, wa_phone: '549100', role: 'user', content: 'Hello', created_at: '2024-01-01T00:00:01Z' },
+		];
+		mockLimit.mockReturnValue({ then: (r: any) => r({ data: msgs, error: null }) });
+
+		const result = await db.loadHistory('549100', 20);
+
+		// reversed → chronological: id 1 first, id 2 second
+		expect(result[0].id).toBe(1);
+		expect(result[1].id).toBe(2);
+	});
+
+	it('loadHistory defaults to 20 messages', async () => {
+		mockLimit.mockReturnValue({ then: (r: any) => r({ data: [], error: null }) });
+		await db.loadHistory('549100');
+		expect(mockLimit).toHaveBeenCalledWith(20);
+	});
+
+	it('appendHistory inserts a message row', async () => {
+		const msg = { id: 1, wa_phone: '549100', role: 'user', content: 'Hello', created_at: '' };
+		mockSingle.mockResolvedValue({ data: msg, error: null });
+
+		const result = await db.appendHistory('549100', 'user', 'Hello');
+
+		expect(mockInsert).toHaveBeenCalledWith({ wa_phone: '549100', role: 'user', content: 'Hello' });
+		expect(result).toEqual(msg);
+	});
+
+	it('wasProcessed returns false when message_id not found', async () => {
+		mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+		const result = await db.wasProcessed('msg-x');
+		expect(result).toBe(false);
+	});
+
+	it('wasProcessed returns true when message_id exists', async () => {
+		mockMaybeSingle.mockResolvedValue({ data: { message_id: 'msg-x' }, error: null });
+		const result = await db.wasProcessed('msg-x');
+		expect(result).toBe(true);
+	});
+
+	it('markProcessed inserts the message_id', async () => {
+		mockInsert.mockReturnValue({ then: (r: any) => r({ error: null }) });
+		await db.markProcessed('msg-x');
+		expect(mockInsert).toHaveBeenCalledWith({ message_id: 'msg-x' });
+	});
+
+	it('markProcessed ignores duplicate key error (idempotent)', async () => {
+		mockInsert.mockReturnValue({ then: (r: any) => r({ error: { code: '23505' } }) });
+		await expect(db.markProcessed('msg-x')).resolves.toBeUndefined();
+	});
+});

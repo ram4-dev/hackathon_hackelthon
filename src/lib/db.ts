@@ -15,6 +15,9 @@ import type {
 	OrgImpact,
 	KnowledgeEntry,
 	KnowledgeKind,
+	Session,
+	Message,
+	MessageRole,
 } from "../domain/types";
 
 const ASSIGNMENT_STATUSES: AssignmentStatus[] = [
@@ -491,5 +494,97 @@ export const db = {
 		if (error) throw error;
 		if (!data) throw new Error(`Knowledge entry not found: ${id}`);
 		return data as KnowledgeEntry;
+	},
+
+	// --- SPEC-D.8 ---
+
+	async getSession(wa_phone: string): Promise<Session | null> {
+		const { data, error } = await supabase
+			.from("sessions")
+			.select("*")
+			.eq("wa_phone", wa_phone)
+			.maybeSingle();
+
+		if (error) throw error;
+		return data as Session | null;
+	},
+
+	async setSession(
+		wa_phone: string,
+		state: string | null,
+		context: Record<string, unknown>
+	): Promise<Session> {
+		const payload = {
+			wa_phone,
+			state,
+			context,
+			updated_at: new Date().toISOString(),
+		};
+
+		const { data, error } = await supabase
+			.from("sessions")
+			.upsert(payload, { onConflict: "wa_phone" })
+			.select()
+			.single();
+
+		if (error) throw error;
+		return data as Session;
+	},
+
+	async clearSession(wa_phone: string): Promise<void> {
+		const { error } = await supabase
+			.from("sessions")
+			.delete()
+			.eq("wa_phone", wa_phone);
+
+		if (error) throw error;
+	},
+
+	async loadHistory(wa_phone: string, n = 20): Promise<Message[]> {
+		// Fetch last n rows desc, then reverse for chronological order
+		const { data, error } = await supabase
+			.from("messages")
+			.select("*")
+			.eq("wa_phone", wa_phone)
+			.order("created_at", { ascending: false })
+			.limit(n);
+
+		if (error) throw error;
+		return ((data ?? []) as Message[]).reverse();
+	},
+
+	async appendHistory(
+		wa_phone: string,
+		role: MessageRole,
+		content: string
+	): Promise<Message> {
+		const { data, error } = await supabase
+			.from("messages")
+			.insert({ wa_phone, role, content })
+			.select()
+			.single();
+
+		if (error) throw error;
+		return data as Message;
+	},
+
+	async wasProcessed(message_id: string): Promise<boolean> {
+		const { data, error } = await supabase
+			.from("processed_messages")
+			.select("message_id")
+			.eq("message_id", message_id)
+			.maybeSingle();
+
+		if (error) throw error;
+		return data !== null;
+	},
+
+	async markProcessed(message_id: string): Promise<void> {
+		const { error } = await supabase
+			.from("processed_messages")
+			.insert({ message_id });
+
+		// Ignore duplicate key — idempotent by design
+		if (error && error.code !== "23505") throw error;
 	},
 };
