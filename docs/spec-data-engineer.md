@@ -40,12 +40,13 @@
 **Validación:** `db.getBoard()` y `db.listCoordinators()` devuelven datos no vacíos.
 
 ### SPEC-D.3 — Personas
-**Funciones:** `db.upsertPerson`, `db.getPersonByPhone`, `db.listCoordinators`.
+**Funciones:** `db.upsertPerson`, `db.getPersonByPhone`, `db.listCoordinators`, `db.listPeople`.
 **Criterios de aceptación:**
 - [ ] `upsertPerson` inserta si el `wa_phone` no existe y **actualiza** si existe (no duplica).
 - [ ] Defaults aplicados: `capacity='media'`, `is_coordinator=false`, `skills=[]`, `active=true`, `timezone` AR.
 - [ ] `getPersonByPhone` devuelve `null` (no error) si no existe.
 - [ ] `listCoordinators` solo trae `is_coordinator=true` y `active=true`.
+- [ ] `listPeople({active})` lista personas (con `skills`) para el scoring de ML; `active` filtra por estado.
 **Validación:** test: upsert dos veces el mismo `wa_phone` → 1 sola fila, datos mergeados.
 
 ### SPEC-D.4 — Tareas + tablero
