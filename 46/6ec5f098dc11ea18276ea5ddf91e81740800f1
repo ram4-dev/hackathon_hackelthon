@@ -1,0 +1,29 @@
+lib/prompt.ts
+  s_b7d8ae6ebbf325::t_0e458909255231 19,57
+scripts/chat.ts
+  s_b7d8ae6ebbf325::t_0e458909255231 90
+docs/PRD-v4.md
+  s_b7d8ae6ebbf325::t_0e458909255231 6,14,21,37,230,462
+docs/data-engineer-overview.md
+  s_b7d8ae6ebbf325::t_0e458909255231 9
+"docs/spec 00 contract.md"
+  s_b7d8ae6ebbf325::t_0e458909255231 1
+docs/RFC-v1.md
+  s_b7d8ae6ebbf325::t_0e458909255231 1,3,11,337
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "466ec5f098dc11ea18276ea5ddf91e81740800f1",
+  "prompts": {},
+  "sessions": {
+    "s_b7d8ae6ebbf325": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019e9eef-96a2-7f9d-a576-fc0a8ce9e32d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ramiro <ramiro.carnicer@mercadolibre.com>"
+    }
+  }
+}
