@@ -11,6 +11,10 @@ import type {
 	Board,
 	ImpactReportSummary,
 	PersonLoad,
+	ImpactReport,
+	OrgImpact,
+	KnowledgeEntry,
+	KnowledgeKind,
 } from "../domain/types";
 
 const ASSIGNMENT_STATUSES: AssignmentStatus[] = [
@@ -364,5 +368,128 @@ export const db = {
 
 		if (error) throw error;
 		return (data ?? []) as PersonLoad[];
+	},
+
+	// --- SPEC-D.6 ---
+
+	async insertImpactReport(input: {
+		task_id: string;
+		reported_by?: string;
+		task_type?: TaskType;
+		inputs?: Record<string, unknown>;
+		outputs?: Record<string, unknown>;
+		outcome?: string;
+		headline?: string;
+		raw_answers?: Record<string, unknown>;
+		summary?: string;
+	}): Promise<ImpactReport> {
+		const payload = {
+			task_id: input.task_id,
+			reported_by: input.reported_by,
+			task_type: input.task_type,
+			inputs: input.inputs ?? {},
+			outputs: input.outputs ?? {},
+			outcome: input.outcome,
+			headline: input.headline,
+			raw_answers: input.raw_answers ?? {},
+			summary: input.summary,
+		};
+
+		const { data, error } = await supabase
+			.from("impact_reports")
+			.insert(payload)
+			.select()
+			.single();
+
+		if (error) throw error;
+		return data as ImpactReport;
+	},
+
+	async getImpactReport(task_id: string): Promise<ImpactReport | null> {
+		const { data, error } = await supabase
+			.from("impact_reports")
+			.select("*")
+			.eq("task_id", task_id)
+			.order("created_at", { ascending: false })
+			.limit(1)
+			.maybeSingle();
+
+		if (error) throw error;
+		return data as ImpactReport | null;
+	},
+
+	async getOrgImpact(): Promise<OrgImpact> {
+		const { data, error } = await supabase
+			.from("impact_reports")
+			.select("headline, task_type")
+			.order("created_at", { ascending: false });
+
+		if (error) throw error;
+
+		const rows = (data ?? []) as { headline?: string; task_type?: string }[];
+		const headlines = rows.flatMap((r) => (r.headline ? [r.headline] : []));
+		const by_type: Record<string, number> = {};
+		for (const r of rows) {
+			if (r.task_type) {
+				by_type[r.task_type] = (by_type[r.task_type] ?? 0) + 1;
+			}
+		}
+
+		return { headlines, by_type };
+	},
+
+	// --- SPEC-D.7 ---
+
+	async loadKnowledge(): Promise<KnowledgeEntry[]> {
+		const { data, error } = await supabase
+			.from("knowledge")
+			.select("*")
+			.order("created_at", { ascending: true });
+
+		if (error) throw error;
+		return (data ?? []) as KnowledgeEntry[];
+	},
+
+	async addKnowledge(input: {
+		content: string;
+		kind?: KnowledgeKind;
+		tags?: string[];
+		source?: string;
+	}): Promise<KnowledgeEntry> {
+		const payload = {
+			content: input.content,
+			kind: input.kind ?? "hecho",
+			tags: input.tags ?? [],
+			source: input.source,
+		};
+
+		const { data, error } = await supabase
+			.from("knowledge")
+			.insert(payload)
+			.select()
+			.single();
+
+		if (error) throw error;
+		return data as KnowledgeEntry;
+	},
+
+	async updateKnowledge(
+		id: string,
+		patch: Partial<Pick<KnowledgeEntry, "content" | "tags" | "kind" | "source">>
+	): Promise<KnowledgeEntry> {
+		if (Object.keys(patch).length === 0) {
+			throw new Error("updateKnowledge: patch must have at least one field");
+		}
+
+		const { data, error } = await supabase
+			.from("knowledge")
+			.update(patch)
+			.eq("id", id)
+			.select()
+			.single();
+
+		if (error) throw error;
+		if (!data) throw new Error(`Knowledge entry not found: ${id}`);
+		return data as KnowledgeEntry;
 	},
 };

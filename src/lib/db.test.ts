@@ -516,3 +516,186 @@ describe('db assignment functions (SPEC-D.5)', () => {
 		expect(mockFrom).toHaveBeenCalledWith('person_load');
 	});
 });
+
+describe('db impact functions (SPEC-D.6)', () => {
+	let mockFrom: any;
+	let mockSingle: any;
+	let mockMaybeSingle: any;
+	let mockInsert: any;
+	let mockSelect: any;
+	let mockEq: any;
+	let mockOrder: any;
+	let mockLimit: any;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+
+		mockSingle = vi.fn();
+		mockMaybeSingle = vi.fn();
+		mockLimit = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+		mockOrder = vi.fn().mockReturnValue({
+			then: (r: any) => r({ data: [], error: null }),
+			limit: mockLimit,
+		});
+		mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+		mockSelect = vi.fn().mockReturnValue({
+			eq: mockEq,
+			order: mockOrder,
+			single: mockSingle,
+		});
+		mockInsert = vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnValue({ single: mockSingle }),
+		});
+
+		mockFrom = vi.fn().mockReturnValue({
+			select: mockSelect,
+			insert: mockInsert,
+		});
+
+		(supabase.from as any) = mockFrom;
+	});
+
+	it('insertImpactReport persists with defaults for inputs/outputs/raw_answers', async () => {
+		const report = { id: 'rid', task_id: 't1', inputs: {}, outputs: {}, raw_answers: {}, created_at: '' };
+		mockSingle.mockResolvedValue({ data: report, error: null });
+
+		const result = await db.insertImpactReport({ task_id: 't1', headline: 'Done' });
+
+		expect(mockInsert).toHaveBeenCalledWith(
+			expect.objectContaining({ task_id: 't1', inputs: {}, outputs: {}, raw_answers: {} })
+		);
+		expect(result).toEqual(report);
+	});
+
+	it('insertImpactReport persists provided inputs and headline', async () => {
+		const report = { id: 'rid', task_id: 't1', headline: 'Impact!', inputs: { reach: 50 }, created_at: '' };
+		mockSingle.mockResolvedValue({ data: report, error: null });
+
+		await db.insertImpactReport({
+			task_id: 't1',
+			headline: 'Impact!',
+			inputs: { reach: 50 },
+			outputs: { beneficiaries: 20 },
+		});
+
+		expect(mockInsert).toHaveBeenCalledWith(
+			expect.objectContaining({ headline: 'Impact!', inputs: { reach: 50 } })
+		);
+	});
+
+	it('getImpactReport returns null when no report exists', async () => {
+		mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+		const res = await db.getImpactReport('task-x');
+		expect(res).toBeNull();
+	});
+
+	it('getImpactReport returns the latest report for a task', async () => {
+		const report = { id: 'rid', task_id: 't1', created_at: '2024-06-01' };
+		mockMaybeSingle.mockResolvedValue({ data: report, error: null });
+		const res = await db.getImpactReport('t1');
+		expect(res).toEqual(report);
+	});
+
+	it('getOrgImpact returns headlines and by_type counts', async () => {
+		const rows = [
+			{ headline: 'H1', task_type: 'charla' },
+			{ headline: 'H2', task_type: 'informe' },
+			{ headline: null, task_type: 'charla' },
+		];
+		mockOrder.mockReturnValue({ then: (r: any) => r({ data: rows, error: null }) });
+
+		const result = await db.getOrgImpact();
+
+		expect(result.headlines).toEqual(['H1', 'H2']);
+		expect(result.by_type).toEqual({ charla: 2, informe: 1 });
+	});
+
+	it('getOrgImpact returns empty headlines and by_type when no reports', async () => {
+		mockOrder.mockReturnValue({ then: (r: any) => r({ data: [], error: null }) });
+		const result = await db.getOrgImpact();
+		expect(result.headlines).toEqual([]);
+		expect(result.by_type).toEqual({});
+	});
+});
+
+describe('db knowledge functions (SPEC-D.7)', () => {
+	let mockFrom: any;
+	let mockSingle: any;
+	let mockInsert: any;
+	let mockUpdate: any;
+	let mockSelect: any;
+	let mockEq: any;
+	let mockOrder: any;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+
+		mockSingle = vi.fn();
+		mockOrder = vi.fn().mockReturnValue({ then: (r: any) => r({ data: [], error: null }) });
+		mockEq = vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnValue({ single: mockSingle }),
+		});
+		mockSelect = vi.fn().mockReturnValue({ order: mockOrder, single: mockSingle });
+		mockInsert = vi.fn().mockReturnValue({
+			select: vi.fn().mockReturnValue({ single: mockSingle }),
+		});
+		mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
+
+		mockFrom = vi.fn().mockReturnValue({
+			select: mockSelect,
+			insert: mockInsert,
+			update: mockUpdate,
+		});
+
+		(supabase.from as any) = mockFrom;
+	});
+
+	it('loadKnowledge returns all rows ordered by created_at asc', async () => {
+		const rows = [
+			{ id: 'k1', content: 'Fact A', kind: 'hecho', tags: [], created_at: '2024-01-01' },
+			{ id: 'k2', content: 'Fact B', kind: 'proceso', tags: ['x'], created_at: '2024-01-02' },
+		];
+		mockOrder.mockReturnValue({ then: (r: any) => r({ data: rows, error: null }) });
+
+		const result = await db.loadKnowledge();
+		expect(result).toEqual(rows);
+		expect(mockFrom).toHaveBeenCalledWith('knowledge');
+	});
+
+	it('addKnowledge applies defaults kind=hecho and tags=[]', async () => {
+		const entry = { id: 'k1', content: 'A fact', kind: 'hecho', tags: [], created_at: '' };
+		mockSingle.mockResolvedValue({ data: entry, error: null });
+
+		await db.addKnowledge({ content: 'A fact' });
+
+		expect(mockInsert).toHaveBeenCalledWith(
+			expect.objectContaining({ content: 'A fact', kind: 'hecho', tags: [] })
+		);
+	});
+
+	it('addKnowledge accepts explicit kind and tags', async () => {
+		const entry = { id: 'k1', content: 'Policy', kind: 'politica', tags: ['important'], created_at: '' };
+		mockSingle.mockResolvedValue({ data: entry, error: null });
+
+		await db.addKnowledge({ content: 'Policy', kind: 'politica', tags: ['important'] });
+
+		expect(mockInsert).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: 'politica', tags: ['important'] })
+		);
+	});
+
+	it('updateKnowledge patches content and tags', async () => {
+		const updated = { id: 'k1', content: 'Updated', tags: ['new'], kind: 'hecho', created_at: '' };
+		mockSingle.mockResolvedValue({ data: updated, error: null });
+
+		const result = await db.updateKnowledge('k1', { content: 'Updated', tags: ['new'] });
+
+		expect(mockUpdate).toHaveBeenCalledWith({ content: 'Updated', tags: ['new'] });
+		expect(result).toEqual(updated);
+	});
+
+	it('updateKnowledge rejects empty patch', async () => {
+		await expect(db.updateKnowledge('k1', {})).rejects.toThrow('patch must have at least one field');
+		expect(mockFrom).not.toHaveBeenCalled();
+	});
+});

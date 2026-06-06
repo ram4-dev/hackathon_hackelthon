@@ -177,3 +177,35 @@ export interface PersonLoad {
 	active_tasks: number;
 }
 
+// --- SPEC-D.6 Types ---
+export interface ImpactReport {
+	id: string;
+	task_id: string;
+	reported_by?: string;
+	task_type?: TaskType;
+	inputs: Record<string, unknown>;
+	outputs: Record<string, unknown>;
+	outcome?: string;
+	headline?: string;
+	raw_answers: Record<string, unknown>;
+	summary?: string;
+	created_at: string;
+}
+
+export interface OrgImpact {
+	headlines: string[];
+	by_type: Partial<Record<TaskType, number>>;
+}
+
+// --- SPEC-D.7 Types ---
+export type KnowledgeKind = "hecho" | "politica" | "proceso";
+
+export interface KnowledgeEntry {
+	id: string;
+	content: string;
+	kind: KnowledgeKind;
+	tags: string[];
+	source?: string;
+	created_at: string;
+}
+
