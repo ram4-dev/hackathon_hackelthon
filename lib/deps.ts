@@ -18,11 +18,13 @@ export interface Deps {
 	now: () => string;
 }
 
-// HORNERO_FORCE_MOCK=1 fuerza mocks aunque haya credenciales (lo usan el harness y la demo
-// para NO mandar WhatsApp reales mientras probás local).
+// HORNERO_FORCE_MOCK=1 → todo mock (db + envío), aunque haya credenciales (harness/demo).
+// HORNERO_MOCK_SEND=1 → solo el ENVÍO a mock; la db sigue real → probar el agente contra
+//   Supabase real SIN mandar WhatsApp de verdad.
 const forceMock = process.env.HORNERO_FORCE_MOCK === "1";
+const mockSend = forceMock || process.env.HORNERO_MOCK_SEND === "1";
 const useSupabase = !forceMock && !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-const useKapso = !forceMock && !!process.env.KAPSO_API_KEY && !!process.env.KAPSO_PHONE_NUMBER_ID;
+const useKapso = !mockSend && !!process.env.KAPSO_API_KEY && !!process.env.KAPSO_PHONE_NUMBER_ID;
 
 // Import dinámico: lib/db.ts crea el cliente Supabase al importarse, así que solo lo
 // cargamos cuando está configurado (evita romper el modo mock sin credenciales).
