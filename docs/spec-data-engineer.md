@@ -24,12 +24,178 @@
 ## 2. Specs
 
 ### SPEC-D.1 — Esquema + vista
-**Comportamiento:** crear todas las tablas y la vista `person_load` de SPEC-00 §3 en Supabase (usá el MCP para generarlas/migrarlas).
+**Comportamiento:** crear en **Supabase Cloud** todas las tablas y la vista `person_load` de SPEC-00 §3. Usar el **MCP remoto de Supabase** en dev-time, no el MCP local.
+
+**MCP target:**
+- Servidor: `https://mcp.supabase.com/mcp`
+- Si se conoce el proyecto, preferir: `https://mcp.supabase.com/mcp?project_ref=<SUPABASE_PROJECT_REF>`
+- Features necesarias: `database` (migraciones + SQL). `docs` opcional.
+- No usar `read_only=true` para esta spec, porque hay que aplicar migración.
+
+**Delegación a Antigravity:** Codex no puede conectarse al MCP de Supabase desde esta sesión. Antigravity queda como agente ejecutor de SPEC-D.1 en Supabase Cloud.
+
+Tasks para Antigravity:
+- [ ] Autenticarse contra el MCP remoto de Supabase Cloud (`https://mcp.supabase.com/mcp`) con permisos de escritura sobre el proyecto correcto.
+- [ ] Confirmar el `project_ref` antes de ejecutar cambios y, si es posible, usar el MCP scoping `?project_ref=<SUPABASE_PROJECT_REF>`.
+- [ ] Aplicar la migración `001_spec_d1_schema` con el SQL de esta sección.
+- [ ] Verificar que existen `people, tasks, assignments, knowledge, impact_reports, sessions, messages, processed_messages`.
+- [ ] Ejecutar el smoke SQL de validación de esta sección.
+- [ ] Confirmar explícitamente que `person_load.active_effort = 3` y `person_load.active_tasks = 1`.
+- [ ] Ejecutar el rollback manual del smoke test (`delete from people where wa_phone = '5491100000000';`) después de capturar evidencia.
+- [ ] Reportar evidencia mínima: proyecto usado, nombre/id de migración, output del smoke query, y confirmación de rollback.
+
+Guardrails para Antigravity:
+- No tocar seed: SPEC-D.2 empieza después.
+- No crear enums Postgres: D.1 sigue el contrato `text` de SPEC-00.
+- No activar RLS en el MVP.
+- No cambiar el shape de tablas/vista sin actualizar primero SPEC-00.
+
+**Migración requerida:** aplicar una migración única e idempotente para el MVP. Nombre sugerido: `001_spec_d1_schema`.
+
+```sql
+create extension if not exists pgcrypto;
+
+create table if not exists people (
+  id uuid primary key default gen_random_uuid(),
+  wa_phone text unique not null,
+  name text not null,
+  role text,
+  skills text[] default '{}',
+  capacity text default 'media',
+  is_coordinator boolean default false,
+  timezone text default 'America/Argentina/Buenos_Aires',
+  active boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists tasks (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  description text,
+  task_type text,
+  priority text default 'media',
+  required_skills text[] default '{}',
+  effort int default 1,
+  deadline timestamptz,
+  status text default 'pendiente',
+  created_by uuid references people(id),
+  created_at timestamptz default now()
+);
+
+create table if not exists assignments (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid references tasks(id) on delete cascade,
+  person_id uuid references people(id),
+  status text default 'propuesta',
+  reason text,
+  coord_id uuid references people(id),
+  coord_decision_at timestamptz,
+  rejected_by text,
+  proposed_at timestamptz default now(),
+  responded_at timestamptz
+);
+
+create table if not exists knowledge (
+  id uuid primary key default gen_random_uuid(),
+  content text not null,
+  kind text default 'hecho',
+  tags text[] default '{}',
+  source text,
+  created_at timestamptz default now()
+);
+
+create table if not exists impact_reports (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid references tasks(id) on delete cascade,
+  reported_by uuid references people(id),
+  task_type text,
+  inputs jsonb default '{}',
+  outputs jsonb default '{}',
+  outcome text,
+  headline text,
+  raw_answers jsonb default '{}',
+  summary text,
+  created_at timestamptz default now()
+);
+
+create table if not exists sessions (
+  wa_phone text primary key,
+  state text,
+  context jsonb default '{}',
+  updated_at timestamptz default now()
+);
+
+create table if not exists messages (
+  id bigserial primary key,
+  wa_phone text not null,
+  role text not null,
+  content text not null,
+  created_at timestamptz default now()
+);
+
+create table if not exists processed_messages (
+  message_id text primary key,
+  at timestamptz default now()
+);
+
+drop view if exists person_load;
+
+create view person_load as
+select p.id,
+       p.name,
+       p.capacity,
+       coalesce(sum(t.effort) filter (where t.status in ('aprobada','en_curso')), 0) as active_effort,
+       count(t.id) filter (where t.status in ('aprobada','en_curso')) as active_tasks
+from people p
+left join assignments a on a.person_id = p.id and a.status = 'aprobada'
+left join tasks t on t.id = a.task_id
+group by p.id, p.name, p.capacity;
+```
+
+**Notas de alcance:**
+- RLS queda **off** para el MVP, como deuda técnica explícita de SPEC-00 §3.
+- No crear enums Postgres en D.1: el contrato actual usa `text` y la validación fuerte queda en `types.ts`/`db.*`.
+- No crear seed en D.1: eso empieza en SPEC-D.2.
+
 **Criterios de aceptación:**
 - [ ] Existen `people, tasks, assignments, knowledge, impact_reports, sessions, messages, processed_messages`.
 - [ ] `person_load` devuelve `active_effort` y `active_tasks` correctos (suma `effort` de tareas `aprobada/en_curso` asignadas y aprobadas).
 - [ ] Insert/select básico funciona en cada tabla.
-**Validación:** correr un SQL que inserte 1 persona + 1 tarea + 1 assignment `aprobada` y verificar que `select * from person_load` muestre `active_effort = effort` de esa tarea.
+
+**Validación:** correr este smoke SQL en Supabase Cloud y verificar que devuelve `active_effort = 3` y `active_tasks = 1` para la persona insertada.
+
+```sql
+with person as (
+  insert into people (wa_phone, name, skills, capacity)
+  values ('5491100000000', 'Smoke Data Engineer', array['datos'], 'media')
+  on conflict (wa_phone) do update
+    set name = excluded.name,
+        skills = excluded.skills,
+        capacity = excluded.capacity
+  returning id
+),
+task as (
+  insert into tasks (title, effort, status, created_by)
+  select 'Smoke SPEC-D.1', 3, 'aprobada', id
+  from person
+  returning id
+),
+assignment as (
+  insert into assignments (task_id, person_id, status)
+  select task.id, person.id, 'aprobada'
+  from task, person
+  returning id
+)
+select pl.*
+from person_load pl
+join person p on p.id = pl.id;
+```
+
+**Rollback manual para el smoke test:**
+
+```sql
+delete from people where wa_phone = '5491100000000';
+```
 
 ### SPEC-D.2 — Seed de demo
 **Comportamiento:** poblar datos creíbles para la demo.
