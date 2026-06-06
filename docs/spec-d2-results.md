@@ -45,12 +45,12 @@ SPEC-D.2 is done only when all gates pass.
 
 | Gate | Expected result | Status |
 |---|---:|---|
-| Active demo people | `4` | Pending Antigravity |
-| Active coordinator | `>= 1` | Pending Antigravity |
-| Demo knowledge rows | `5` | Pending Antigravity |
-| Demo pending task | `1` | Pending Antigravity |
-| Demo proposed task | `1` | Pending Antigravity |
-| Pending approval assignment | `1` | Pending Antigravity |
+| Active demo people | `4` | Passed |
+| Active coordinator | `>= 1` | Passed |
+| Demo knowledge rows | `5` | Passed |
+| Demo pending task | `1` | Passed |
+| Demo proposed task | `1` | Passed |
+| Pending approval assignment | `1` | Passed |
 
 ---
 
@@ -74,23 +74,32 @@ Fill this after Antigravity runs the seed and validation queries.
 |---|---|
 | Supabase project ref | `tjpfstdhxsgwyejlosfq` |
 | Seed name/id | `002_spec_d2_demo_seed` |
-| Seed applied at | TBD |
-| Validation executed at | TBD |
-| `active_people` | TBD |
-| `active_coordinators` | TBD |
-| `demo_knowledge` | TBD |
-| task status counts | TBD |
-| `pending_approval` | TBD |
+| Seed applied at | 2026-06-06 18:56 UTC |
+| Validation executed at | 2026-06-06 18:56 UTC |
+| `active_people` | 4 |
+| `active_coordinators` | 1 |
+| `demo_knowledge` | 5 |
+| task status counts | 1 pendiente, 1 propuesta |
+| `pending_approval` | 1 |
 | Executor | Antigravity |
 
 Validation output:
 
-```text
-TBD
+```json
+{
+  "active_people": [{"active_people": 4}],
+  "active_coordinators": [{"active_coordinators": 1}],
+  "demo_knowledge": [{"demo_knowledge": 5}],
+  "tasks": [
+    {"status": "pendiente", "tasks": 1},
+    {"status": "propuesta", "tasks": 1}
+  ],
+  "pending_approval": [{"pending_approval": 1}]
+}
 ```
 
 Final status:
 
 ```text
-Pending Antigravity execution.
+Completed successfully.
 ```
